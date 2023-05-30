@@ -4,8 +4,10 @@ import 'package:custom_radio_grouped_button/custom_radio_grouped_button.dart';
 import 'package:empty_widget/empty_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
@@ -68,6 +70,7 @@ class SearchScreen extends StatelessWidget {
                     children: [
                       TypeAheadFormField(
                         textFieldConfiguration: TextFieldConfiguration(
+                          autofocus:autoFocusText,
                           onSubmitted: (value) {
                           if(JosKeys.formKeyForSearch.currentState!.validate())
                           {
@@ -374,7 +377,12 @@ class SearchScreen extends StatelessWidget {
                                     .contains(model.src.portrait)
                                     ? Colors.red
                                     : Colors.white,
-                              ))
+                              )),
+                          IconButton(onPressed: ()async{
+                            var file = await DefaultCacheManager().getSingleFile(model.src.portrait);
+                            await Share.shareFiles([file.path]).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
+                          }, icon: const Icon(Icons.share,color: Colors.white,size: 30,)),
+
                         ],
                       ),
                     )

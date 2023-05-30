@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 
 int ?pageNumber;
+bool autoFocusText=false;
+String titleCategory="";
 
 
 String selectedTypeImage="JPG";
@@ -13,4 +15,4 @@ class JosKeys {
 
 }
 
-List<String> categoryImages = ['Cars', 'Funny', 'Animal', 'Music', 'Space', 'Draw', 'Joker','Game','Love'];
+List<String> categoryImages = ['Cars','Black & White', 'Animal', 'Music', 'Space', 'Draw', 'Joker','Game','Love','Funny','Nature','Baby'];

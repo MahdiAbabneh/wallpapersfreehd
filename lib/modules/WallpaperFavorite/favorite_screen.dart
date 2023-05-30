@@ -1,11 +1,14 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
+import 'package:custom_radio_grouped_button/custom_radio_grouped_button.dart';
 import 'package:empty_widget/empty_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/cubit.dart';
@@ -108,11 +111,24 @@ class FavoriteScreen extends StatelessWidget {
                     children: [
                       Stack(alignment: Alignment.topLeft,
                         children:[
-                          CachedNetworkImage(width: double.infinity,
-                            imageUrl: image,
-                            placeholder: (context, url) => CircularProgressIndicator(),
-                            errorWidget: (context, url, error) => Icon(Icons.error),
+                          Container(color: Colors.transparent,
+                            height: MediaQuery.of(context).size.height*0.7,
+                            child: ClipRect(
+                              child: PhotoView.customChild(backgroundDecoration: const BoxDecoration(
+                                  borderRadius:BorderRadius.all(Radius.circular(20)),
+                                  color: Colors.transparent
+                              ),
+                                child: Container(color: Colors.transparent,
+                                  child: Column(
+                                    children: <Widget>[
+                                      Image.network(image),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
+
                           Padding(
                             padding: const EdgeInsets.only(left: 25,top: 5),
                             child: Icon(Icons.favorite,color: Colors.red,size: 30,),

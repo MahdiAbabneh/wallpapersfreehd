@@ -1,5 +1,7 @@
 const String homeTitle="Home Wallpapers";
 
+const String categoryTitle="Category Wallpapers";
+
 const String favoriteTitle="Favorite Wallpapers";
 
 const String searchTitle="Search Wallpapers";
@@ -14,7 +16,7 @@ const String saveImageDone="Image Saving Successfully";
 
 const String noFavorite="No Favorite Image Found";
 
-const String imagesToFavorite="Add Images to Favorite to show here & Share it with your friends";
+const String imagesToFavorite="Add Images to Favorite to show here";
 
 const String moreRandomImage="Other Wallpapers ...";
 

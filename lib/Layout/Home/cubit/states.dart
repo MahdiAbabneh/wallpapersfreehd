@@ -35,3 +35,11 @@ class WallpaperGetDataCategoryLoading extends HomeStates {}
 class WallpaperGetDataCategorySuccess extends HomeStates {}
 
 class WallpaperGetDataCategoryError extends HomeStates {}
+
+class WallpaperSearchSelectImageLoading extends HomeStates {}
+
+class WallpaperSearchSelectImageSuccess extends HomeStates {}
+
+class WallpaperSearchSelectImageError extends HomeStates {}
+
+

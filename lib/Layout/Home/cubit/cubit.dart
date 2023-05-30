@@ -101,6 +101,20 @@ class HomeCubit extends Cubit<HomeStates> {
     });
   }
 
+  CuratedPhotos? curatedSearchSelectPhotos;
+  Future<void>  searchSelectImages(String? text)async {
+    curatedSearchSelectPhotos=null;
+    emit(WallpaperSearchSelectImageLoading());
+    await  DioHelper.getData(
+      url: 'https://api.pexels.com/v1/search?query=$text&per_page=80',
+    ).then((value) {
+      curatedSearchSelectPhotos=CuratedPhotos.fromJson(value.data);
+      emit(WallpaperSearchSelectImageSuccess());
+    }).catchError((error) {
+      emit(WallpaperSearchSelectImageError());
+    });
+  }
+
   Database? db;
 
   ///create DB

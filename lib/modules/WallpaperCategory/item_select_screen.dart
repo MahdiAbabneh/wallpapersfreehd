@@ -6,112 +6,90 @@ import 'package:empty_widget/empty_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:wallpaper_app/Compouents/adaptive_indicator.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/cubit.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
-import 'package:wallpaper_app/models/CustomInterstitialAd.dart';
 import 'package:wallpaper_app/models/curated_photos.dart';
-import 'package:wallpaper_app/network/cache_helper.dart';
+
+import '../../Compouents/adaptive_indicator.dart';
+import '../../models/BackendService.dart';
+import '../../models/CustomBannerAd.dart';
+import '../../models/CustomInterstitialAd.dart';
 
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class ItemSelectScreen extends StatelessWidget {
+  const ItemSelectScreen({super.key});
+
 
   @override
   Widget build(BuildContext context) {
     var cubit = HomeCubit.get(context);
     return BlocConsumer<HomeCubit, HomeStates>(
-      listener: (context, state) {
-        if(state is WallpaperImageInGallerySuccess)
-          {
-            awesomeDialogSuccess(context,saveImageDone).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
-          }
-        if(state is WallpaperCroppedImageSuccess)
-          {
-            showToastSuccess(saveText, context);
-          }
-      },
+      listener: (context, state) {},
       builder: (context, state) {
-        return Scaffold(appBar: AppBar(
-          title:Column(
-            children: [
-              const Text(homeTitle),
-              SizedBox(height: 5,),
-              if(state is WallpaperImageInGalleryLoading)
-                const LinearProgressIndicator(),
-            ],
-          ),
-          centerTitle: true,
-        ),
-        body:Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Column(
+        return Scaffold(
+            resizeToAvoidBottomInset : false,
+            appBar: AppBar(
+              title: Column(
                 children: [
-                  TextFormField(
-                    readOnly: true,
-                    onTap: ()async{
-                      HomeCubit.get(context).selectItem(3);
-                      autoFocusText=true;
-                      await Future.delayed(Duration(seconds: 3));
-                      autoFocusText=false;
-                    },
-                    decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.image_search_outlined),
-                        border: OutlineInputBorder(),
-                        label: Text('What is on your mind?')),
-                  ),
+                   Text(titleCategory),
+                  SizedBox(height: 5,),
+                  if(state is WallpaperImageInGalleryLoading)
+                    const LinearProgressIndicator(),
                 ],
               ),
-              SizedBox(height: 10,),
-
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      SizedBox(height: 10,),
-                      ConditionalBuilder(
-                        condition:cubit.curatedPhotos!=null,
-                        builder: (context) =>builderWidget(cubit.curatedPhotos,context,state),
-                        fallback: (context) => const Center(
-                          child:  AdaptiveIndicator(),
-                        ),
-                      ),
-                      if(state is WallpaperGetDataError)
-                        Center(
-                          child: EmptyWidget(
-                            hideBackgroundAnimation: true,
-                            image: null,
-                            packageImage: PackageImage.Image_1,
-                            title: "Something Wrong Please Check Your Network :(",
-                            titleTextStyle: const TextStyle(
-                              fontSize: 22,
-                              color: Color(0xff9da9c7),
-                              fontWeight: FontWeight.w500,
-                            ),
-                            subtitleTextStyle: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xffabb8d6),
-                            ),
+              centerTitle: true,
+            ),
+            body: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 10,),
+                        ConditionalBuilder(
+                          condition:cubit.curatedSearchSelectPhotos!=null,
+                          builder: (context) =>builderWidget(cubit.curatedSearchSelectPhotos,context,state),
+                          fallback: (context) => const Center(
+                            child:  AdaptiveIndicator(),
                           ),
                         ),
-                    ],
+                        if(state is WallpaperGetDataError)
+                          Center(
+                            child: EmptyWidget(
+                              hideBackgroundAnimation: true,
+                              image: null,
+                              packageImage: PackageImage.Image_1,
+                              title: "Something Wrong Please Check Your Network :(",
+                              titleTextStyle: const TextStyle(
+                                fontSize: 22,
+                                color: Color(0xff9da9c7),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              subtitleTextStyle: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xffabb8d6),
+                              ),
+                            ),
+                          ),
+
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        );
-      },
-    );
+                SizedBox(height: 20,),
+                const CustomBannerAd()
+              ],
+            ),);
+
+      });
   }
+
   Widget builderWidget(CuratedPhotos? model,context,state) =>
       SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -119,7 +97,7 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             GridView.count(
-              padding: EdgeInsets.all(5),
+                padding: EdgeInsets.all(5),
                 primary: true,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -129,30 +107,6 @@ class HomeScreen extends StatelessWidget {
                 childAspectRatio: 1 / 1.50,
                 children:
                 List.generate(model!.photos.length,(index)=>buildGridProduct(model.photos[index],context))),
-            SizedBox(height: 20,),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10.0,right: 10),
-                child: SizedBox(width: double.infinity,
-                  child: ElevatedButton(onPressed: (){
-                    if(pageNumber==180)
-                      {
-                        pageNumber=1;
-                      }
-                    else{
-                      pageNumber=pageNumber!+1;
-                    }
-                    CacheHelper.sharedPreferences?.setInt("pageNumber",pageNumber!);
-                        HomeCubit.get(context)
-                            .getHomeData()
-                            .whenComplete(() =>
-                                AdInterstitialBottomSheet.loadIntersitialAd())
-                            .whenComplete(() =>
-                                AdInterstitialBottomSheet.showInterstitialAd());
-                      }, child: const Text(moreRandomImage,style: TextStyle(color: Colors.white),)),
-                ),
-              ),
-            ),
             const SizedBox(height: 20,)
           ],
         ),
@@ -357,6 +311,5 @@ class HomeScreen extends StatelessWidget {
         ),
       );
 
+
 }
-
-
