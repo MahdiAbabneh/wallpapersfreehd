@@ -18,7 +18,7 @@ class HomeLayout extends StatelessWidget {
             children: [
               BottomNavigationBar(
                 selectedItemColor: Theme.of(context).primaryColor,
-                unselectedItemColor: Colors.grey,
+                unselectedItemColor: Colors.white,
                 items: cubit.item,
                 currentIndex:cubit.indexScreen ,
                 onTap: (index){
@@ -27,6 +27,7 @@ class HomeLayout extends StatelessWidget {
               ),
               SizedBox(height: 10,),
               const CustomBannerAd(),
+              SizedBox(height: 20,)
             ],
           ),
           body:cubit.screen[cubit.indexScreen],

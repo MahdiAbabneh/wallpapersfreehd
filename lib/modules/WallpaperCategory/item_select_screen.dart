@@ -83,7 +83,9 @@ class ItemSelectScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 20,),
-                const CustomBannerAd()
+                const CustomBannerAd(),
+                SizedBox(height: 20,)
+
               ],
             ),);
 
