@@ -134,6 +134,7 @@ class HomeCubit extends Cubit<HomeStates> {
   Future<void> getDataFromDatabase(database) async {
     favoriteImage = await database.rawQuery('SELECT url FROM FavoriteImage');
     favoriteImage= favoriteImage.map((e) => e["url"]).toList();
+    favoriteImage = favoriteImage.reversed.toList();
     emit(WallpaperGetDataFromDB());
   }
 
