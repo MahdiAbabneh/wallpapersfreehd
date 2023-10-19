@@ -85,13 +85,10 @@ class HomeCubit extends Cubit<HomeStates> {
   String type="original";
   String file="original";
   Future<void> saveImageInGallery(String image) async {
-    print(type);
-    print(file);
     emit(WallpaperImageInGalleryLoading());
     await GallerySaver.saveImage(image,albumName: 'Wallpaper Free HD').then((value) {
       emit(WallpaperImageInGallerySuccess());
     }).catchError((error) {
-      print(error.toString());
       emit(WallpaperImageInGalleryError());
     });
   }
@@ -101,7 +98,6 @@ class HomeCubit extends Cubit<HomeStates> {
     await GallerySaver.saveVideo(video,albumName: 'Wallpaper Free HD').then((value) {
       emit(WallpaperImageInGallerySuccess());
     }).catchError((error) {
-      print(error.toString());
       emit(WallpaperImageInGalleryError());
     });
   }
@@ -209,11 +205,6 @@ class HomeCubit extends Cubit<HomeStates> {
         favoriteVideoImage = await database.rawQuery('SELECT * FROM FavoriteVideo');
         favoriteVideoImage= favoriteVideoImage.map((e) => e["urlImage"]).toList();
         favoriteVideoImage = favoriteVideoImage.reversed.toList();
-
-        // favoriteVideo = favoriteVideo.where((url) => url != null).toList();
-        // favoriteVideoImage = favoriteVideoImage.where((url) => url != null).toList();
-        print(favoriteVideo);
-        print(favoriteVideoImage);
       }
     else{
       favoriteImage = await database.rawQuery('SELECT url FROM FavoriteImage');
@@ -315,7 +306,6 @@ class HomeCubit extends Cubit<HomeStates> {
       saveImageInGallery(value!.path);
       emit(WallpaperCroppedImageSuccess());
     }).catchError((error) {
-      print(error.toString());
       emit(WallpaperCroppedImageError());
     });
   }
@@ -332,14 +322,15 @@ class HomeCubit extends Cubit<HomeStates> {
   Future<void> getCategoryData() async{
     curatedPhotosCategory=null;
     int randomNumber = generateRandomNumber(1, 180);
-    print(randomNumber);
     emit(WallpaperGetDataCategoryLoading());
     await  DioHelper.getData(
       url: 'https://api.pexels.com/v1/curated/?page=$randomNumber&per_page=40',
     ).then((value) {
       curatedPhotosCategory=CuratedPhotos.fromJson(value.data);
       emit(WallpaperGetDataCategorySuccess());
+      getCategoryData2();
     }).catchError((error) {
+      print(error.toString());
       emit(WallpaperGetDataCategoryError());
     });
   }
@@ -348,7 +339,6 @@ class HomeCubit extends Cubit<HomeStates> {
   Future<void> getCategoryData2() async{
     curatedVideoCategory=null;
     int randomNumber = generateRandomNumber(1, 180);
-    print(randomNumber);
     emit(WallpaperGetDataCategoryLoading());
     await  DioHelper.getData(
       url: 'https://api.pexels.com/videos/popular/?page=$randomNumber&per_page=40',
@@ -356,6 +346,7 @@ class HomeCubit extends Cubit<HomeStates> {
       curatedVideoCategory=VideoModel.fromJson(value.data);
       emit(WallpaperGetDataCategorySuccess());
     }).catchError((error) {
+      print(error.toString());
       emit(WallpaperGetDataCategoryError());
     });
   }
