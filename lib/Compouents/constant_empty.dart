@@ -8,11 +8,14 @@ String titleCategory="";
 String selectedTypeImage="JPG";
 
 
-TextEditingController searchController = TextEditingController();
+TextEditingController searchPhotosController = TextEditingController();
+TextEditingController searchVideosController = TextEditingController();
+
 
 class JosKeys {
-  static final formKeyForSearch = GlobalKey<FormState>();
+  static final formKeyForSearchPhotos = GlobalKey<FormState>();
+  static final formKeyForSearchVideos = GlobalKey<FormState>();
 
 }
 
-List<String> categoryImages = ['Cars','Black & White', 'Animal', 'Music', 'Space', 'Draw', 'Joker','Game','Love','Funny','Nature','Baby'];
+List<String> categoryImages = ['Cars', 'Animal', 'Music', 'Space', 'Draw', 'Food','Game','Love','Funny','Nature','Baby','B & W'];

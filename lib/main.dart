@@ -30,7 +30,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (BuildContext context) => HomeCubit()..getHomeData()..createDatabase()..getCategoryData()),
+        BlocProvider(
+            create: (BuildContext context) => HomeCubit()
+              ..getHomeData()
+              ..getHomeData2()
+              ..createDatabase()
+              ..createDatabase2()
+              ..getCategoryData()
+              ..getCategoryData2()),
       ],
       child: BlocConsumer<HomeCubit,HomeStates>(
         listener: (context, state) {},
@@ -39,7 +46,7 @@ class MyApp extends StatelessWidget {
             theme: FlexThemeData.dark(
               scheme: FlexScheme.mango,
               fontFamily:"mali"),
-            title: "Wallpapers Free HD",
+            title: "Studio Free HD",
             debugShowCheckedModeBanner: false,
             home:HomeLayout(),
           );

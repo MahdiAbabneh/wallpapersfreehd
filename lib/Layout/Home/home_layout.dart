@@ -25,9 +25,9 @@ class HomeLayout extends StatelessWidget {
                   cubit.selectItem(index);
                 },
               ),
-              SizedBox(height: 10,),
-              const CustomBannerAd(),
-              SizedBox(height: 20,)
+              // SizedBox(height: 10,),
+              // const CustomBannerAd(),
+              // SizedBox(height: 20,)
             ],
           ),
           body:cubit.screen[cubit.indexScreen],

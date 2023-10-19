@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class AdaptiveIndicator extends StatelessWidget {
 
@@ -11,7 +12,13 @@ class AdaptiveIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (Platform.isAndroid) {
-      return const CircularProgressIndicator();
+      return  Padding(
+        padding: const EdgeInsets.only(top: 20.0),
+        child: LoadingAnimationWidget.staggeredDotsWave(
+          color: Theme.of(context).primaryColor,
+          size: MediaQuery.of(context).size.width * 0.4,
+        ),
+      );
     }
     return const CupertinoActivityIndicator();
   }

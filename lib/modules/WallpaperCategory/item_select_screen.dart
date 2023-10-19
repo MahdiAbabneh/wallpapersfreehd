@@ -6,7 +6,6 @@ import 'package:empty_widget/empty_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
@@ -15,9 +14,7 @@ import 'package:wallpaper_app/Compouents/widgets.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/cubit.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
 import 'package:wallpaper_app/models/curated_photos.dart';
-
 import '../../Compouents/adaptive_indicator.dart';
-import '../../models/BackendService.dart';
 import '../../models/CustomBannerAd.dart';
 import '../../models/CustomInterstitialAd.dart';
 
@@ -48,37 +45,39 @@ class ItemSelectScreen extends StatelessWidget {
             body: Column(
               children: [
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        SizedBox(height: 10,),
-                        ConditionalBuilder(
-                          condition:cubit.curatedSearchSelectPhotos!=null,
-                          builder: (context) =>builderWidget(cubit.curatedSearchSelectPhotos,context,state),
-                          fallback: (context) => const Center(
-                            child:  AdaptiveIndicator(),
-                          ),
-                        ),
-                        if(state is WallpaperGetDataError)
-                          Center(
-                            child: EmptyWidget(
-                              hideBackgroundAnimation: true,
-                              image: null,
-                              packageImage: PackageImage.Image_1,
-                              title: "Something Wrong Please Check Your Network :(",
-                              titleTextStyle: const TextStyle(
-                                fontSize: 22,
-                                color: Color(0xff9da9c7),
-                                fontWeight: FontWeight.w500,
-                              ),
-                              subtitleTextStyle: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xffabb8d6),
-                              ),
+                  child: Scrollbar(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          SizedBox(height: 10,),
+                          ConditionalBuilder(
+                            condition:cubit.curatedSearchSelectPhotos!=null,
+                            builder: (context) =>builderWidget(cubit.curatedSearchSelectPhotos,context,state),
+                            fallback: (context) => const Center(
+                              child:  AdaptiveIndicator(),
                             ),
                           ),
+                          if(state is WallpaperGetDataError)
+                            Center(
+                              child: EmptyWidget(
+                                hideBackgroundAnimation: true,
+                                image: null,
+                                packageImage: PackageImage.Image_1,
+                                title: "Something Wrong Please Check Your Network :(",
+                                titleTextStyle: const TextStyle(
+                                  fontSize: 22,
+                                  color: Color(0xff9da9c7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                subtitleTextStyle: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xffabb8d6),
+                                ),
+                              ),
+                            ),
 
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -281,7 +280,7 @@ class ItemSelectScreen extends StatelessWidget {
 
                           }, icon: const Icon(Icons.file_download_outlined,color: Colors.white,size: 30,)),
                           IconButton(onPressed: (){
-                            HomeCubit.get(context).insertToDatabase(model.src.portrait.toString());
+                            HomeCubit.get(context).insertToDatabase(model.src.portrait.toString(),'',false);
                           },
                               icon: Icon(
                                 HomeCubit.get(context)

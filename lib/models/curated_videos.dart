@@ -4,8 +4,7 @@ class VideoModel {
   List<Video> videos;
   int totalResults;
   String nextPage;
-  String prevPage;
-  String apiUrl;
+  String url;
 
   VideoModel({
     required this.page,
@@ -13,24 +12,19 @@ class VideoModel {
     required this.videos,
     required this.totalResults,
     required this.nextPage,
-    required this.prevPage,
-    required this.apiUrl,
+    required this.url,
   });
 
   factory VideoModel.fromJson(Map<String, dynamic> json) {
-    List<dynamic> videosList = json['videos'] ?? [];
-    List<Video> videoData = videosList.map((videoJson) {
-      return Video.fromJson(videoJson);
-    }).toList();
-
     return VideoModel(
-      page: json['page'] ?? 0,
-      perPage: json['per_page'] ?? 0,
-      videos: videoData,
-      totalResults: json['total_results'] ?? 0,
-      nextPage: json['next_page'] ?? "",
-      prevPage: json['prev_page'] ?? "",
-      apiUrl: json['url'] ?? "",
+      page: json['page'],
+      perPage: json['per_page'],
+      videos: (json['videos'] as List)
+          .map((videoJson) => Video.fromJson(videoJson))
+          .toList(),
+      totalResults: json['total_results'],
+      nextPage: json['next_page'],
+      url: json['url'],
     );
   }
 }
@@ -47,6 +41,7 @@ class Video {
   String? avgColor;
   User user;
   List<VideoFile> videoFiles;
+  List<VideoPicture> videoPictures;
 
   Video({
     required this.id,
@@ -60,26 +55,27 @@ class Video {
     this.avgColor,
     required this.user,
     required this.videoFiles,
+    required this.videoPictures,
   });
 
   factory Video.fromJson(Map<String, dynamic> json) {
-    List<dynamic> videoFilesList = json['video_files'] ?? [];
-    List<VideoFile> videoFilesData = videoFilesList.map((fileJson) {
-      return VideoFile.fromJson(fileJson);
-    }).toList();
-
     return Video(
-      id: json['id'] ?? 0,
-      width: json['width'] ?? 0,
-      height: json['height'] ?? 0,
-      duration: json['duration'] ?? 0,
+      id: json['id'],
+      width: json['width'],
+      height: json['height'],
+      duration: json['duration'],
       fullRes: json['full_res'],
-      tags: List<String>.from(json['tags'] ?? []),
-      url: json['url'] ?? "",
-      image: json['image'] ?? "",
+      tags: List<String>.from(json['tags']),
+      url: json['url'],
+      image: json['image'],
       avgColor: json['avg_color'],
-      user: User.fromJson(json['user'] ?? {}),
-      videoFiles: videoFilesData,
+      user: User.fromJson(json['user']),
+      videoFiles: (json['video_files'] as List)
+          .map((fileJson) => VideoFile.fromJson(fileJson))
+          .toList(),
+      videoPictures: (json['video_pictures'] as List)
+          .map((pictureJson) => VideoPicture.fromJson(pictureJson))
+          .toList(),
     );
   }
 }
@@ -97,9 +93,9 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? "",
-      url: json['url'] ?? "",
+      id: json['id'],
+      name: json['name'],
+      url: json['url'],
     );
   }
 }
@@ -125,13 +121,33 @@ class VideoFile {
 
   factory VideoFile.fromJson(Map<String, dynamic> json) {
     return VideoFile(
-      id: json['id'] ?? 0,
-      quality: json['quality'] ?? "",
-      fileType: json['file_type'] ?? "",
-      width: json['width'] ?? 0,
-      height: json['height'] ?? 0,
-      fps: json['fps'] ?? 0.0,
-      link: json['link'] ?? "",
+      id: json['id'],
+      quality: json['quality'],
+      fileType: json['file_type'],
+      width: json['width'],
+      height: json['height'],
+      fps: json['fps'] != null ? json['fps'].toDouble() : 0.0, // Handle null case here
+      link: json['link'],
+    );
+  }
+}
+
+class VideoPicture {
+  int id;
+  int nr;
+  String picture;
+
+  VideoPicture({
+    required this.id,
+    required this.nr,
+    required this.picture,
+  });
+
+  factory VideoPicture.fromJson(Map<String, dynamic> json) {
+    return VideoPicture(
+      id: json['id'],
+      nr: json['nr'],
+      picture: json['picture'],
     );
   }
 }

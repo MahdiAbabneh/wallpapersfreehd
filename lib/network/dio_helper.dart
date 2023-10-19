@@ -20,7 +20,7 @@ class DioHelper {
   {
     dio.options.headers =
     {
-      'Authorization':'563492ad6f9170000100000174dda4707e934bc58524e21b8e440b15',
+      'Authorization':'3TDCtNcGheyNuWloH8Dd7cda0G9l0WqR4BYJfYYD8X0FgQkwaO3DlxXA',
     };
 
     return await dio.get(

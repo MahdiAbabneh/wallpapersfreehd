@@ -2,6 +2,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:custom_radio_grouped_button/custom_radio_grouped_button.dart';
 import 'package:empty_widget/empty_widget.dart';
+import 'package:fijkplayer/fijkplayer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -17,6 +18,7 @@ import 'package:wallpaper_app/models/curated_photos.dart';
 
 import '../../models/BackendService.dart';
 import '../../models/CustomInterstitialAd.dart';
+import '../../models/curated_videos.dart';
 
 
 class SearchScreen extends StatelessWidget {
@@ -47,133 +49,275 @@ class SearchScreen extends StatelessWidget {
 
       },
       builder: (context, state) {
-        return Scaffold(
-            resizeToAvoidBottomInset : false,
-            appBar: AppBar(
-              title: Column(
-                children: [
-                  const Text(searchTitle),
-                  SizedBox(height: 5,),
-                  if(state is WallpaperImageInGalleryLoading)
-                    const LinearProgressIndicator(),
-                ],
-              ),
-              centerTitle: true,
-            ),
-            body: Form(
-              key: JosKeys.formKeyForSearch,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children:[
-                    Column(
+        return DefaultTabController(
+          length: 2,
+          child: Scaffold(
+              resizeToAvoidBottomInset : false,
+              appBar: AppBar(
+                bottom:TabBar(indicatorWeight: 4.0 ,indicatorColor: Colors.white,tabs: [
+                  Tab(child:Row(mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      TypeAheadFormField(
-                        textFieldConfiguration: TextFieldConfiguration(
-                          autofocus:autoFocusText,
-                          onSubmitted: (value) {
-                          if(JosKeys.formKeyForSearch.currentState!.validate())
-                          {
-                            if(value.toString().toLowerCase()=="sex"||
-                                value.toString().toLowerCase()=="gay"||
-                                value.toString().toLowerCase()=="ass"||
-                                value.toString().toLowerCase()=="boobs")
-                            {
-                              awesomeDialogFailed(context,"Some words cannot be searched :) ");
-
-                            }
-                            else
-                            {
-                              searchController.text=value.toString().toLowerCase();
-                              cubit.searchImages(value.toString().toLowerCase());
-                            }
-                          }
-
-                          return null;
-                          },
-                          controller: searchController,
-
-                          decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.image_search_outlined),
-                              border: OutlineInputBorder(),
-                              label: Text('What is on your mind?')),
-                        ),
-                        suggestionsCallback: (pattern) async {
-                          return await BackendService.getSuggestions(pattern);
-                        },
-                        itemBuilder: (context, Map<String, String> suggestion) {
-                          return ListTile(
-                            title: Text(suggestion['name']!),
-                          );
-                        },
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return inputText;
-                          }
-                          return null;
-                        },
-
-                        onSuggestionSelected: (Map<String, String> suggestion) {
-                          if(JosKeys.formKeyForSearch.currentState!.validate())
-                          {
-                           if(suggestion['name']!.toString().toLowerCase()=="sex"||
-                               suggestion['name']!.toString().toLowerCase()=="gay"||
-                               suggestion['name']!.toString().toLowerCase()=="ass"||
-                               suggestion['name']!.toString().toLowerCase()=="boobs")
-                             {
-                               awesomeDialogFailed(context,"Some words cannot be searched :) ");
-
-                             }
-                           else
-                             {
-                               searchController.text=suggestion['name']!.toString().toLowerCase();
-                               cubit.searchImages(suggestion['name']!.toString().toLowerCase());
-                             }
-                          }
-
-                          return null;
-
-                        },
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
+                      Icon(Icons.image_outlined),
+                      SizedBox(width: 10,),
+                      Text("Photos",style: TextStyle(fontWeight: FontWeight.bold)),
                     ],
-                  ),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            if (state is WallpaperSearchImageLoading)
-                              const LinearProgressIndicator(),
-                            if (cubit.curatedSearchPhotos!=null)
-                              builderWidget(cubit.curatedSearchPhotos,context,state),
-                            if (cubit.curatedSearchPhotos==null)
-                              Center(
-                              child: EmptyWidget(
-                                hideBackgroundAnimation: true,
-                                image: null,
-                                packageImage: PackageImage.Image_1,
-                                title: noImagesFound,
-                                subTitle: inputValidText,
-                                titleTextStyle: const TextStyle(
-                                  fontSize: 22,
-                                  color: Color(0xff9da9c7),
-                                  fontWeight: FontWeight.w500,
+                  )),
+                  Tab(child:Row(mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.video_camera_back_outlined),
+                      SizedBox(width: 10,),
+                      Text("Videos",style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),),
+
+                ],),
+                title: Column(
+                  children: [
+                    const Text(searchTitle),
+                    SizedBox(height: 5,),
+                    if(state is WallpaperImageInGalleryLoading)
+                      const LinearProgressIndicator(),
+                  ],
+                ),
+                centerTitle: true,
+              ),
+              body: TabBarView(
+                children: [
+                  Form(
+                    key: JosKeys.formKeyForSearchPhotos,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                          children:[
+                            Column(
+                              children: [
+                                TypeAheadFormField(
+                                  textFieldConfiguration: TextFieldConfiguration(
+                                    autofocus:autoFocusText,
+                                    onSubmitted: (value) {
+                                      if(JosKeys.formKeyForSearchPhotos.currentState!.validate())
+                                      {
+                                        if(value.toString().toLowerCase()=="sex"||
+                                            value.toString().toLowerCase()=="gay"||
+                                            value.toString().toLowerCase()=="ass"||
+                                            value.toString().toLowerCase()=="boobs")
+                                        {
+                                          awesomeDialogFailed(context,"Some words cannot be searched :) ");
+
+                                        }
+                                        else
+                                        {
+                                          searchPhotosController.text=value.toString().toLowerCase();
+                                          cubit.searchImages(value.toString().toLowerCase());
+                                        }
+                                      }
+
+                                      return null;
+                                    },
+                                    controller: searchPhotosController,
+
+                                    decoration: InputDecoration(
+                                        prefixIcon: Icon(Icons.image_outlined),
+                                        border: OutlineInputBorder(),
+                                        label: Text('Search Photo')),
+                                  ),
+                                  suggestionsCallback: (pattern) async {
+                                    return await BackendService.getSuggestions(pattern);
+                                  },
+                                  itemBuilder: (context, Map<String, String> suggestion) {
+                                    return ListTile(
+                                      title: Text(suggestion['name']!),
+                                    );
+                                  },
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return inputText;
+                                    }
+                                    return null;
+                                  },
+
+                                  onSuggestionSelected: (Map<String, String> suggestion) {
+                                    if(JosKeys.formKeyForSearchPhotos.currentState!.validate())
+                                    {
+                                      if(suggestion['name']!.toString().toLowerCase()=="sex"||
+                                          suggestion['name']!.toString().toLowerCase()=="gay"||
+                                          suggestion['name']!.toString().toLowerCase()=="ass"||
+                                          suggestion['name']!.toString().toLowerCase()=="boobs")
+                                      {
+                                        awesomeDialogFailed(context,"Some words cannot be searched :) ");
+
+                                      }
+                                      else
+                                      {
+                                        searchPhotosController.text=suggestion['name']!.toString().toLowerCase();
+                                        cubit.searchImages(suggestion['name']!.toString().toLowerCase());
+                                      }
+                                    }
+
+                                    return null;
+
+                                  },
                                 ),
-                                subtitleTextStyle: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xffabb8d6),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                              ],
+                            ),
+                            Expanded(
+                              child: Scrollbar(
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    children: [
+                                      if (state is WallpaperSearchImageLoading)
+                                        const LinearProgressIndicator(),
+                                      if (cubit.curatedSearchPhotos!=null)
+                                        builderWidget(cubit.curatedSearchPhotos,context,state),
+                                      if (cubit.curatedSearchPhotos==null)
+                                        Center(
+                                          child: EmptyWidget(
+                                            hideBackgroundAnimation: true,
+                                            image: null,
+                                            packageImage: PackageImage.Image_1,
+                                            title: noImagesFound,
+                                            subTitle: inputValidText,
+                                            titleTextStyle: const TextStyle(
+                                              fontSize: 22,
+                                              color: Color(0xff9da9c7),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            subtitleTextStyle: const TextStyle(
+                                              fontSize: 14,
+                                              color: Color(0xffabb8d6),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ),
+                            )
+                          ]),
+                    ),
+                  ),
+                  Form(
+                    key: JosKeys.formKeyForSearchVideos,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                          children:[
+                            Column(
+                              children: [
+                                TypeAheadFormField(
+                                  textFieldConfiguration: TextFieldConfiguration(
+                                    autofocus:autoFocusText,
+                                    onSubmitted: (value) {
+                                      if(JosKeys.formKeyForSearchVideos.currentState!.validate())
+                                      {
+                                        if(value.toString().toLowerCase()=="sex"||
+                                            value.toString().toLowerCase()=="gay"||
+                                            value.toString().toLowerCase()=="ass"||
+                                            value.toString().toLowerCase()=="boobs")
+                                        {
+                                          awesomeDialogFailed(context,"Some words cannot be searched :) ");
+
+                                        }
+                                        else
+                                        {
+                                          searchVideosController.text=value.toString().toLowerCase();
+                                          cubit.searchVideo(value.toString().toLowerCase());
+                                        }
+                                      }
+
+                                      return null;
+                                    },
+                                    controller: searchVideosController,
+
+                                    decoration: InputDecoration(
+                                        prefixIcon: Icon(Icons.video_camera_back_outlined),
+                                        border: OutlineInputBorder(),
+                                        label: Text('Search Video')),
+                                  ),
+                                  suggestionsCallback: (pattern) async {
+                                    return await BackendService.getSuggestions(pattern);
+                                  },
+                                  itemBuilder: (context, Map<String, String> suggestion) {
+                                    return ListTile(
+                                      title: Text(suggestion['name']!),
+                                    );
+                                  },
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return inputText;
+                                    }
+                                    return null;
+                                  },
+
+                                  onSuggestionSelected: (Map<String, String> suggestion) {
+                                    if(JosKeys.formKeyForSearchVideos.currentState!.validate())
+                                    {
+                                      if(suggestion['name']!.toString().toLowerCase()=="sex"||
+                                          suggestion['name']!.toString().toLowerCase()=="gay"||
+                                          suggestion['name']!.toString().toLowerCase()=="ass"||
+                                          suggestion['name']!.toString().toLowerCase()=="boobs")
+                                      {
+                                        awesomeDialogFailed(context,"Some words cannot be searched :) ");
+
+                                      }
+                                      else
+                                      {
+                                        searchVideosController.text=suggestion['name']!.toString().toLowerCase();
+                                        cubit.searchVideo(suggestion['name']!.toString().toLowerCase());
+                                      }
+                                    }
+
+                                    return null;
+
+                                  },
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                    )
-                ]),
-              ),
-            ));
+                            Expanded(
+                              child: Scrollbar(
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    children: [
+                                      if (state is WallpaperSearchImageLoading)
+                                        const LinearProgressIndicator(),
+                                      if (cubit.curatedSearchVideo!=null)
+                                        builderWidget2(cubit.curatedSearchVideo,context,state),
+                                      if (cubit.curatedSearchVideo==null)
+                                        Center(
+                                          child: EmptyWidget(
+                                            hideBackgroundAnimation: true,
+                                            image: null,
+                                            packageImage: PackageImage.Image_1,
+                                            title: noImagesFound,
+                                            subTitle: inputValidText,
+                                            titleTextStyle: const TextStyle(
+                                              fontSize: 22,
+                                              color: Color(0xff9da9c7),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            subtitleTextStyle: const TextStyle(
+                                              fontSize: 14,
+                                              color: Color(0xffabb8d6),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                          ]),
+                    ),
+                  ),
+                ],
+              )),
+        );
 
       });
   }
@@ -364,7 +508,7 @@ class SearchScreen extends StatelessWidget {
 
                           }, icon: const Icon(Icons.file_download_outlined,color: Colors.white,size: 30,)),
                           IconButton(onPressed: (){
-                            HomeCubit.get(context).insertToDatabase(model.src.portrait.toString());
+                            HomeCubit.get(context).insertToDatabase(model.src.portrait.toString(),'',false);
                           },
                               icon: Icon(
                                 HomeCubit.get(context)
@@ -395,6 +539,207 @@ class SearchScreen extends StatelessWidget {
           ),
         ),
       );
+
+  Widget buildGridProduct2(model,video,context) =>
+      Container(decoration: BoxDecoration(border:Border.all(color: Theme.of(context).primaryColor) ),
+        child: InkWell(
+          onTap: (){
+            final FijkPlayer player = FijkPlayer();
+            player.setDataSource(video.link, autoPlay: true,showCover: true);
+            AwesomeDialog(
+              barrierColor: Colors.transparent,
+              dialogBackgroundColor: Colors.transparent,
+              borderSide: BorderSide.none,
+              isDense: true,
+              context: context,
+              dialogType: DialogType.noHeader,
+              body: Container(
+                height: MediaQuery.of(context).size.height * 0.7,
+                width: double.infinity,
+                child:Stack(
+                  children: [
+                    AnimatedOpacity(
+                      opacity: 0.75,
+                      duration: Duration(seconds: 1),
+                      child: Container(
+                        width: double.infinity,
+                        height: MediaQuery.of(context).size.height,
+                        child: CachedNetworkImage(
+                          fit: BoxFit.cover,
+                          imageUrl: model.image,
+                          placeholder: (context, url) => CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => Icon(Icons.error),
+                        ),
+                      ),
+                    ),
+                    FijkView(color: Colors.transparent,
+                      player: player,
+
+                    ),
+                  ],
+                ),
+              ),
+              btnOkColor: Colors.transparent,
+              showCloseIcon: true,
+              closeIcon: Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Icon(Icons.close, color: Colors.white, size: 30,),
+              ),
+              animType: AnimType.leftSlide,
+              headerAnimationLoop: false,
+              title: saveImageDone,
+              onDismissCallback: (type) {
+                player.pause(); // Pause the video when the dialog is dismissed
+              },
+            )..show();
+
+
+
+          },
+          child: Stack(alignment: Alignment.bottomCenter,
+              children: [
+                Stack(alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: MediaQuery.of(context).size.height,
+                      child: CachedNetworkImage(
+                        fit: BoxFit.cover,
+                        imageUrl: model.image,
+                        placeholder: (context, url) => CircularProgressIndicator(),
+                        errorWidget: (context, url, error) => Icon(Icons.error),
+                      ),
+                    ),
+                    Icon(Icons.play_circle, color: Colors.white70, size: 70),                  ],
+                ),
+                Container(
+                  color: Colors.transparent,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: () async {
+                          AwesomeDialog(
+                            body: StatefulBuilder(
+                              builder: (BuildContext context, void Function(void Function()) setState) {
+                                return Column(
+                                  children: [
+                                    Text('Type: ${video.fileType}', style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Quality: ${video.quality}',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Duration: ${model.duration}.s',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Quality: ${video.quality}',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text('Width: ${video.width}', style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 8),
+                                    Text('Height: ${video.height}', style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 8),
+                                    Text('FPS: ${video.fps}', style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
+                                    SizedBox(height: 10,),
+                                  ],
+                                );
+                              },
+                            ),
+                            // customHeader: Icon(Icons.install_mobile_outlined,size:100,color: Theme.of(context).primaryColor,),
+                            btnOkColor: Theme.of(context).primaryColor,
+                            btnOkText: "Download",
+                            context: context,
+                            animType: AnimType.leftSlide,
+                            headerAnimationLoop: false,
+                            dialogType: DialogType.noHeader,
+                            showCloseIcon: true,
+                            title: saveImageDone,
+                            btnOkOnPress: () {
+                              HomeCubit.get(context).saveVideoInGallery(video.link).whenComplete(() => showToastSuccess(saveText, context)
+                              );
+                            },
+                            btnOkIcon: Icons.download,
+                            onDismissCallback: (type) {},
+                          ).show();
+
+
+                        },
+                        icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
+                      ),
+                      IconButton(onPressed: (){
+                        HomeCubit.get(context).insertToDatabase(video.link.toString(),model.image,true);
+                      },
+                          icon: Icon(
+                            HomeCubit.get(context)
+                                .favoriteVideo
+                                .contains(video.link.toString())
+                                ? Icons.favorite
+                                : Icons.favorite_border,size: 30,
+                            color: HomeCubit.get(context)
+                                .favoriteVideo
+                                .contains(video.link.toString())
+                                ? Colors.red
+                                : Colors.white,
+                          )),
+                      IconButton(
+                        onPressed: () async {
+                          var file = await DefaultCacheManager().getSingleFile(video.link);
+                          await Share.shareFiles([file.path]).whenComplete(() =>
+                              AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() =>
+                              AdInterstitialBottomSheet.showInterstitialAd());
+                        },
+                        icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                      ),
+                    ],
+                  ),
+                )
+
+
+              ]
+          ),
+        ),
+      );
+
+  Widget builderWidget2(VideoModel? model, context, state) => SingleChildScrollView(
+    physics: const BouncingScrollPhysics(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GridView.count(
+          padding: EdgeInsets.all(5),
+          primary: true,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 10.0,
+          crossAxisSpacing: 15.0,
+          childAspectRatio: 1 / 1.50,
+          children:  List.generate(
+            model?.videos.length ?? 0,
+                (videoIndex) => Stack(
+              children: List.generate(
+                model?.videos[videoIndex].videoFiles.length ?? 0,
+                    (fileIndex) => buildGridProduct2(
+                    model?.videos[videoIndex],
+                    model?.videos[videoIndex].videoFiles[fileIndex],
+                    context
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+
 
 
 }
