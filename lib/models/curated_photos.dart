@@ -1,33 +1,46 @@
 class CuratedPhotos {
+  late final int page;
+  late final int perPage;
+  late final List<Photos> photos;
+  late final String nextPage;
+
   CuratedPhotos({
     required this.page,
     required this.perPage,
     required this.photos,
     required this.nextPage,
   });
-  late final int page;
-  late final int perPage;
-  late final List<Photos> photos;
-  late final String nextPage;
 
-  CuratedPhotos.fromJson(Map<String, dynamic> json){
-    page = json['page'];
-    perPage = json['per_page'];
-    photos = List.from(json['photos']).map((e)=>Photos.fromJson(e)).toList();
-    nextPage = json['next_page'];
+  CuratedPhotos.fromJson(Map<String, dynamic> json) {
+    page = json['page'] ?? 0;
+    perPage = json['per_page'] ?? 0;
+    photos = List.from(json['photos']).map((e) => Photos.fromJson(e)).toList();
+    nextPage = json['next_page'] ?? "";
   }
 
   Map<String, dynamic> toJson() {
     final data = <String, dynamic>{};
     data['page'] = page;
     data['per_page'] = perPage;
-    data['photos'] = photos.map((e)=>e.toJson()).toList();
+    data['photos'] = photos.map((e) => e.toJson()).toList();
     data['next_page'] = nextPage;
     return data;
   }
 }
 
 class Photos {
+  late final int id;
+  late final int width;
+  late final int height;
+  late final String url;
+  late final String photographer;
+  late final String photographerUrl;
+  late final int photographerId;
+  late final String avgColor;
+  late final Src src;
+  late final bool liked;
+  late final String alt;
+
   Photos({
     required this.id,
     required this.width,
@@ -41,30 +54,19 @@ class Photos {
     required this.liked,
     required this.alt,
   });
-  late final int id;
-  late final int width;
-  late final int height;
-  late final String url;
-  late final String photographer;
-  late final String photographerUrl;
-  late final int photographerId;
-  late final String avgColor;
-  late final Src src;
-  late final bool liked;
-  late final String alt;
 
-  Photos.fromJson(Map<String, dynamic> json){
-    id = json['id'];
-    width = json['width'];
-    height = json['height'];
-    url = json['url'];
-    photographer = json['photographer'];
-    photographerUrl = json['photographer_url'];
-    photographerId = json['photographer_id'];
-    avgColor = json['avg_color'];
-    src = Src.fromJson(json['src']);
-    liked = json['liked'];
-    alt = json['alt'];
+  Photos.fromJson(Map<String, dynamic> json) {
+    id = json['id'] ?? 0;
+    width = json['width'] ?? 0;
+    height = json['height'] ?? 0;
+    url = json['url'] ?? "";
+    photographer = json['photographer'] ?? "";
+    photographerUrl = json['photographer_url'] ?? "";
+    photographerId = json['photographer_id'] ?? 0;
+    avgColor = json['avg_color'] ?? "";
+    src = Src.fromJson(json['src'] ?? {});
+    liked = json['liked'] ?? false;
+    alt = json['alt'] ?? "";
   }
 
   Map<String, dynamic> toJson() {
@@ -85,6 +87,15 @@ class Photos {
 }
 
 class Src {
+  late final String original;
+  late final String large2x;
+  late final String large;
+  late final String medium;
+  late final String small;
+  late final String portrait;
+  late final String landscape;
+  late final String tiny;
+
   Src({
     required this.original,
     required this.large2x,
@@ -95,24 +106,16 @@ class Src {
     required this.landscape,
     required this.tiny,
   });
-  late final String original;
-  late final String large2x;
-  late final String large;
-  late final String medium;
-  late final String small;
-  late final String portrait;
-  late final String landscape;
-  late final String tiny;
 
-  Src.fromJson(Map<String, dynamic> json){
-    original = json['original'];
-    large2x = json['large2x'];
-    large = json['large'];
-    medium = json['medium'];
-    small = json['small'];
-    portrait = json['portrait'];
-    landscape = json['landscape'];
-    tiny = json['tiny'];
+  Src.fromJson(Map<String, dynamic> json) {
+    original = json['original'] ?? "";
+    large2x = json['large2x'] ?? "";
+    large = json['large'] ?? "";
+    medium = json['medium'] ?? "";
+    small = json['small'] ?? "";
+    portrait = json['portrait'] ?? "";
+    landscape = json['landscape'] ?? "";
+    tiny = json['tiny'] ?? "";
   }
 
   Map<String, dynamic> toJson() {

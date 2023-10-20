@@ -35,7 +35,7 @@ class ItemSelectVideosScreen extends StatelessWidget {
                 children: [
                    Text(titleCategory),
                   SizedBox(height: 5,),
-                  if(state is WallpaperImageInGalleryLoading||state is WallpaperSearchSelectImageLoading)
+                  if(state is WallpaperImageInGalleryLoading)
                     const LinearProgressIndicator(),
                 ],
               ),

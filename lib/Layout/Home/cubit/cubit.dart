@@ -77,6 +77,7 @@ class HomeCubit extends Cubit<HomeStates> {
       curatedVideo=VideoModel.fromJson(value.data);
       emit(WallpaperGetDataSuccess());
     }).catchError((error) {
+      print(error.toString());
       emit(WallpaperGetDataError());
     });
   }
@@ -328,7 +329,6 @@ class HomeCubit extends Cubit<HomeStates> {
     ).then((value) {
       curatedPhotosCategory=CuratedPhotos.fromJson(value.data);
       emit(WallpaperGetDataCategorySuccess());
-      getCategoryData2();
     }).catchError((error) {
       print(error.toString());
       emit(WallpaperGetDataCategoryError());

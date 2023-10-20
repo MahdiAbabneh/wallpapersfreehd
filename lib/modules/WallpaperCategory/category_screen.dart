@@ -1254,6 +1254,7 @@ class CategoryScreen extends StatelessWidget {
                                             onTap: () async {
                                               titleCategory =
                                                   categoryImages[index].toString();
+                                              cubit.curatedSearchSelectVideos=null;
                                               navigateTo(context, ItemSelectVideosScreen());
                                               cubit.searchSelectVideos(
                                                   categoryImages[index] == 'B & W'
