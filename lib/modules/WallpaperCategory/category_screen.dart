@@ -19,9 +19,14 @@ import 'package:wallpaper_app/modules/WallpaperCategory/item_select_screen.dart'
 
 import 'item_select_videos_screen.dart';
 
-class CategoryScreen extends StatelessWidget {
+class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
 
+  @override
+  State<CategoryScreen> createState() => _CategoryScreenState();
+}
+
+class _CategoryScreenState extends State<CategoryScreen> {
   @override
   Widget build(BuildContext context) {
     var cubit = HomeCubit.get(context);
@@ -66,7 +71,7 @@ class CategoryScreen extends StatelessWidget {
                   SizedBox(
                     height: 5,
                   ),
-                  if (state is WallpaperImageInGalleryLoading||state is WallpaperGetDataCategoryLoading)
+                  if (state is WallpaperImageInGalleryLoading||state is WallpaperGetDataCategoryLoading||isWait)
                     const LinearProgressIndicator(),
                 ],
               ),
@@ -381,31 +386,36 @@ class CategoryScreen extends StatelessWidget {
                                                                 .white,
                                                             size: 30,
                                                           )),
-                                                      IconButton(
-                                                          onPressed:
-                                                              () async {
-                                                            var file = await DefaultCacheManager()
-                                                                .getSingleFile(item
-                                                                .src
-                                                                .portrait);
-                                                            await Share
-                                                                .shareFiles([
-                                                              file.path
-                                                            ])
-                                                                .whenComplete(() =>
-                                                                AdInterstitialBottomSheet
-                                                                    .loadIntersitialAd())
-                                                                .whenComplete(() =>
-                                                                AdInterstitialBottomSheet
-                                                                    .showInterstitialAd());
-                                                          },
-                                                          icon:
-                                                          const Icon(
-                                                            Icons.share,
-                                                            color: Colors
-                                                                .white,
-                                                            size: 30,
-                                                          )),
+                                                      Builder(builder: (BuildContext context) {
+                                                        return IconButton(
+                                                            onPressed:
+                                                                () async {
+                                                                  final box = context.findRenderObject() as RenderBox?;
+                                                                  var file = await DefaultCacheManager()
+                                                                  .getSingleFile(item
+                                                                  .src
+                                                                  .portrait);
+                                                              await Share.share(file.path,
+                                                                  sharePositionOrigin:
+                                                                  box!.localToGlobal(Offset.zero) &
+                                                                  box.size)
+                                                                  .whenComplete(() =>
+                                                                  AdInterstitialBottomSheet
+                                                                      .loadIntersitialAd())
+                                                                  .whenComplete(() =>
+                                                                  AdInterstitialBottomSheet
+                                                                      .showInterstitialAd());
+                                                            },
+                                                            icon:
+                                                            const Icon(
+                                                              Icons.share,
+                                                              color: Colors
+                                                                  .white,
+                                                              size: 30,
+                                                            ));
+                                                      },
+
+                                                      ),
                                                     ],
                                                   ),
                                                 ),
@@ -708,31 +718,38 @@ class CategoryScreen extends StatelessWidget {
                                                                 .white,
                                                             size: 30,
                                                           )),
-                                                      IconButton(
-                                                          onPressed:
-                                                              () async {
-                                                            var file = await DefaultCacheManager()
-                                                                .getSingleFile(item
-                                                                .src
-                                                                .portrait);
-                                                            await Share
-                                                                .shareFiles([
-                                                              file.path
-                                                            ])
-                                                                .whenComplete(() =>
-                                                                AdInterstitialBottomSheet
-                                                                    .loadIntersitialAd())
-                                                                .whenComplete(() =>
-                                                                AdInterstitialBottomSheet
-                                                                    .showInterstitialAd());
-                                                          },
-                                                          icon:
-                                                          const Icon(
-                                                            Icons.share,
-                                                            color: Colors
-                                                                .white,
-                                                            size: 30,
-                                                          )),
+                                                      Builder(builder: (BuildContext context) {
+
+                                                        return IconButton(
+                                                            onPressed:
+                                                                () async {
+                                                                  final box = context.findRenderObject() as RenderBox?;
+
+                                                                  var file = await DefaultCacheManager()
+                                                                  .getSingleFile(item
+                                                                  .src
+                                                                  .portrait);
+                                                              await Share
+                                                                  .share(
+                                                                file.path,sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+                                                              )
+                                                                  .whenComplete(() =>
+                                                                  AdInterstitialBottomSheet
+                                                                      .loadIntersitialAd())
+                                                                  .whenComplete(() =>
+                                                                  AdInterstitialBottomSheet
+                                                                      .showInterstitialAd());
+                                                            },
+                                                            icon:
+                                                            const Icon(
+                                                              Icons.share,
+                                                              color: Colors
+                                                                  .white,
+                                                              size: 30,
+                                                            ));
+                                                      },
+
+                                                      ),
                                                     ],
                                                   ),
                                                 ),
@@ -1014,14 +1031,30 @@ class CategoryScreen extends StatelessWidget {
                                                                             ? Colors.red
                                                                             : Colors.white,
                                                                       )),
-                                                                  IconButton(
-                                                                    onPressed: () async {
-                                                                      var file = await DefaultCacheManager().getSingleFile(fileV.link);
-                                                                      await Share.shareFiles([file.path]).whenComplete(() =>
-                                                                          AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() =>
-                                                                          AdInterstitialBottomSheet.showInterstitialAd());
-                                                                    },
-                                                                    icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                                                                  Builder(builder: (BuildContext context) {
+
+                                                                    return IconButton(
+                                                                      onPressed: () async {
+
+                                                                        setState(() {
+                                                                          isWait = true;
+                                                                        });
+                                                                        final box = context.findRenderObject() as RenderBox?;
+
+                                                                        var file = await DefaultCacheManager().getSingleFile(fileV.link);
+                                                                        await Share.share(file.path,
+                                                                          sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete((){
+                                                                          setState(() {
+                                                                            isWait = false;
+                                                                          });
+                                                                          AdInterstitialBottomSheet.loadIntersitialAd();
+                                                                        }
+                                                                            ).whenComplete(() =>
+                                                                            AdInterstitialBottomSheet.showInterstitialAd());
+                                                                      },
+                                                                      icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                                                                    );
+                                                                  },
                                                                   ),
                                                                 ],
                                                               ),
@@ -1198,14 +1231,29 @@ class CategoryScreen extends StatelessWidget {
                                                                     ? Colors.red
                                                                     : Colors.white,
                                                               )),
-                                                          IconButton(
-                                                            onPressed: () async {
-                                                              var file = await DefaultCacheManager().getSingleFile(fileV.link);
-                                                              await Share.shareFiles([file.path]).whenComplete(() =>
-                                                                  AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() =>
-                                                                  AdInterstitialBottomSheet.showInterstitialAd());
-                                                            },
-                                                            icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                                                          Builder(builder: (BuildContext context) {
+
+                                                            return IconButton(
+                                                              onPressed: () async {
+                                                                setState(() {
+                                                                  isWait = true;
+                                                                });
+                                                                final box = context.findRenderObject() as RenderBox?;
+
+                                                                var file = await DefaultCacheManager().getSingleFile(fileV.link);
+                                                                await Share.share(file.path,
+                                                                    sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size).whenComplete(() {
+                                                                  setState(() {
+                                                                    isWait = false;
+                                                                  });
+                                                                  AdInterstitialBottomSheet.loadIntersitialAd();
+                                                                }
+                                                                    ).whenComplete(() =>
+                                                                    AdInterstitialBottomSheet.showInterstitialAd());
+                                                              },
+                                                              icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                                                            );
+                                                          },
                                                           ),
                                                         ],
                                                       ),

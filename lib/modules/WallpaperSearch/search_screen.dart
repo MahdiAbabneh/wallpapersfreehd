@@ -9,6 +9,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:wallpaper_app/Compouents/adaptive_indicator.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
@@ -21,10 +22,14 @@ import '../../models/CustomInterstitialAd.dart';
 import '../../models/curated_videos.dart';
 
 
-class SearchScreen extends StatelessWidget {
+class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
+  @override
+  State<SearchScreen> createState() => _SearchScreenState();
+}
 
+class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     var cubit = HomeCubit.get(context);
@@ -40,11 +45,28 @@ class SearchScreen extends StatelessWidget {
         }
         if(state is WallpaperSearchImageSuccess)
         {
+          if(cubit.curatedSearchPhotos!.photos.isEmpty)
+            {
+              awesomeDialogFailed(context,notFoundText);
+            }
           AdInterstitialBottomSheet.loadIntersitialAd();
           if(AdInterstitialBottomSheet.isAdReady)
             {
               AdInterstitialBottomSheet.showInterstitialAd();
             }
+        }
+
+        if(state is WallpaperSearchImageSuccessVideo)
+        {
+          if(cubit.curatedSearchVideo!.videos.isEmpty)
+          {
+            awesomeDialogFailed(context,notFoundText);
+          }
+          AdInterstitialBottomSheet.loadIntersitialAd();
+          if(AdInterstitialBottomSheet.isAdReady)
+          {
+            AdInterstitialBottomSheet.showInterstitialAd();
+          }
         }
 
       },
@@ -75,7 +97,7 @@ class SearchScreen extends StatelessWidget {
                   children: [
                     const Text(searchTitle),
                     SizedBox(height: 5,),
-                    if(state is WallpaperImageInGalleryLoading)
+                    if(state is WallpaperImageInGalleryLoading||isWait)
                       const LinearProgressIndicator(),
                   ],
                 ),
@@ -92,6 +114,7 @@ class SearchScreen extends StatelessWidget {
                             Column(
                               children: [
                                 TypeAheadFormField(
+                                  loadingBuilder: (context) => Center(child: const AdaptiveIndicator()),
                                   textFieldConfiguration: TextFieldConfiguration(
                                     autofocus:autoFocusText,
                                     onSubmitted: (value) {
@@ -168,11 +191,9 @@ class SearchScreen extends StatelessWidget {
                                 child: SingleChildScrollView(
                                   child: Column(
                                     children: [
-                                      if (state is WallpaperSearchImageLoading)
-                                        const LinearProgressIndicator(),
                                       if (cubit.curatedSearchPhotos!=null)
                                         builderWidget(cubit.curatedSearchPhotos,context,state),
-                                      if (cubit.curatedSearchPhotos==null)
+                                      if (cubit.curatedSearchPhotos==null&&state is !WallpaperSearchImageLoading)
                                         Center(
                                           child: EmptyWidget(
                                             hideBackgroundAnimation: true,
@@ -191,6 +212,8 @@ class SearchScreen extends StatelessWidget {
                                             ),
                                           ),
                                         ),
+                                      if(state is WallpaperSearchImageLoading)
+                                        Center(child: const AdaptiveIndicator()),
                                     ],
                                   ),
                                 ),
@@ -208,6 +231,7 @@ class SearchScreen extends StatelessWidget {
                             Column(
                               children: [
                                 TypeAheadFormField(
+                                  loadingBuilder: (context) => Center(child: const AdaptiveIndicator()),
                                   textFieldConfiguration: TextFieldConfiguration(
                                     autofocus:autoFocusText,
                                     onSubmitted: (value) {
@@ -284,11 +308,9 @@ class SearchScreen extends StatelessWidget {
                                 child: SingleChildScrollView(
                                   child: Column(
                                     children: [
-                                      if (state is WallpaperSearchImageLoading)
-                                        const LinearProgressIndicator(),
                                       if (cubit.curatedSearchVideo!=null)
                                         builderWidget2(cubit.curatedSearchVideo,context,state),
-                                      if (cubit.curatedSearchVideo==null)
+                                      if (cubit.curatedSearchVideo==null&&state is !WallpaperSearchImageLoading)
                                         Center(
                                           child: EmptyWidget(
                                             hideBackgroundAnimation: true,
@@ -307,6 +329,8 @@ class SearchScreen extends StatelessWidget {
                                             ),
                                           ),
                                         ),
+                                      if (state is WallpaperSearchImageLoading)
+                                        Center(child: const AdaptiveIndicator()),
                                     ],
                                   ),
                                 ),
@@ -340,6 +364,7 @@ class SearchScreen extends StatelessWidget {
           const SizedBox(height: 20,)
         ],
       );
+
   Widget buildGridProduct(model,context) =>
       Container(decoration: BoxDecoration(border:Border.all(color: Theme.of(context).primaryColor) ),
         child: InkWell(
@@ -522,10 +547,16 @@ class SearchScreen extends StatelessWidget {
                                     ? Colors.red
                                     : Colors.white,
                               )),
-                          IconButton(onPressed: ()async{
-                            var file = await DefaultCacheManager().getSingleFile(model.src.portrait);
-                            await Share.shareFiles([file.path]).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
-                          }, icon: const Icon(Icons.share,color: Colors.white,size: 30,)),
+                          Builder(
+                            builder: (BuildContext context) {
+                              return IconButton(onPressed: ()async{
+                                final box = context.findRenderObject() as RenderBox?;
+                                var file = await DefaultCacheManager().getSingleFile(model.src.portrait);
+                                await Share.share(file.path,
+                                  sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
+                              }, icon: const Icon(Icons.share,color: Colors.white,size: 30,));
+                            },
+                         ),
 
                         ],
                       ),
@@ -688,14 +719,29 @@ class SearchScreen extends StatelessWidget {
                                 ? Colors.red
                                 : Colors.white,
                           )),
-                      IconButton(
-                        onPressed: () async {
-                          var file = await DefaultCacheManager().getSingleFile(video.link);
-                          await Share.shareFiles([file.path]).whenComplete(() =>
-                              AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() =>
-                              AdInterstitialBottomSheet.showInterstitialAd());
+                      Builder(
+                        builder: (BuildContext context) {
+                          return IconButton(
+                            onPressed: () async {
+                              setState(() {
+                                isWait = true;
+                              });
+                              final box = context.findRenderObject() as RenderBox?;
+                              var file = await DefaultCacheManager().getSingleFile(video.link);
+                              await Share.share(file.path,
+                                sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() {
+                                setState(() {
+                                  isWait = false;
+                                });
+                                AdInterstitialBottomSheet.loadIntersitialAd();
+                              }
+                                  ).whenComplete(() =>
+                                  AdInterstitialBottomSheet.showInterstitialAd());
+                            },
+                            icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                          );
                         },
-                        icon: const Icon(Icons.share, color: Colors.white, size: 30),
+
                       ),
                     ],
                   ),
@@ -738,8 +784,4 @@ class SearchScreen extends StatelessWidget {
       ],
     ),
   );
-
-
-
-
 }

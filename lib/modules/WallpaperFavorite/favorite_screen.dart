@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/cubit.dart';
@@ -59,7 +60,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               children: [
                 const Text(favoriteTitle),
                   SizedBox(height: 5,),
-                if(state is WallpaperImageInGalleryLoading)
+                if(state is WallpaperImageInGalleryLoading||isWait)
                   const LinearProgressIndicator(),
 
               ],
@@ -257,10 +258,16 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                     ? Colors.red
                                     : Colors.white,
                               )),
-                          IconButton(onPressed: ()async{
-                            var file = await DefaultCacheManager().getSingleFile(image);
-                            await Share.shareFiles([file.path]).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
-                          }, icon: const Icon(Icons.share,color: Colors.white,size: 30,)),
+                          Builder(
+                            builder: (BuildContext context) {
+                              return IconButton(onPressed: ()async{
+                                final box = context.findRenderObject() as RenderBox?;
+                                var file = await DefaultCacheManager().getSingleFile(image);
+                                await Share.share(file.path,
+                                  sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
+                              }, icon: const Icon(Icons.share,color: Colors.white,size: 30,));
+                            },
+                          ),
 
                         ],
                       ),
@@ -416,14 +423,28 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                 ? Colors.red
                                 : Colors.white,
                           )),
-                      IconButton(
-                        onPressed: () async {
-                          var file = await DefaultCacheManager().getSingleFile(video);
-                          await Share.shareFiles([file.path]).whenComplete(() =>
-                              AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() =>
-                              AdInterstitialBottomSheet.showInterstitialAd());
-                        },
-                        icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                      Builder(builder: (BuildContext context) {
+                        return IconButton(
+                          onPressed: () async {
+                            setState(() {
+                              isWait = true;
+                            });
+                            final box = context.findRenderObject() as RenderBox?;
+                            var file = await DefaultCacheManager().getSingleFile(video);
+                            await Share.share(file.path,
+                              sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() {
+                              setState(() {
+                                isWait = false;
+                              });
+                              AdInterstitialBottomSheet.loadIntersitialAd();
+                            }
+                                ).whenComplete(() =>
+                                AdInterstitialBottomSheet.showInterstitialAd());
+                          },
+                          icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                        );
+                      },
+
                       ),
                     ],
                   ),

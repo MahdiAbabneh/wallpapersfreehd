@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Text(homeTitle),
                 SizedBox(height: 5,),
-                if(state is WallpaperImageInGalleryLoading)
+                if(state is WallpaperImageInGalleryLoading||isWait)
                   const LinearProgressIndicator(),
               ],
             ),
@@ -393,12 +393,32 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ? Colors.red
                                     : Colors.white,
                               )),
-                          IconButton(onPressed: ()async{
-                            var file = await DefaultCacheManager().getSingleFile(model.src.portrait);
-                            await Share.shareFiles([file.path]).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
-                          }, icon: const Icon(Icons.share,color: Colors.white,size: 30,)),
-
-                        ],
+                      Builder(
+                        builder: (BuildContext context) {
+                          return IconButton(
+                              onPressed: () async {
+                                final box = context.findRenderObject() as RenderBox?;
+                                var file = await DefaultCacheManager()
+                                    .getSingleFile(model.src.portrait);
+                                await Share.share(file.path,
+                                        sharePositionOrigin:
+                                            box!.localToGlobal(Offset.zero) &
+                                                box.size)
+                                    .whenComplete(() =>
+                                        AdInterstitialBottomSheet
+                                            .loadIntersitialAd())
+                                    .whenComplete(() =>
+                                        AdInterstitialBottomSheet
+                                            .showInterstitialAd());
+                              },
+                              icon: const Icon(
+                                Icons.share,
+                                color: Colors.white,
+                                size: 30,
+                              ));
+                        },
+                      ),
+                    ],
                       ),
                     )
                   ]
@@ -559,14 +579,40 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? Colors.red
                                 : Colors.white,
                           )),
-                      IconButton(
-                        onPressed: () async {
-                          var file = await DefaultCacheManager().getSingleFile(video.link);
-                          await Share.shareFiles([file.path]).whenComplete(() =>
-                              AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() =>
-                              AdInterstitialBottomSheet.showInterstitialAd());
+                      Builder(
+                        builder: (BuildContext context) {
+                          return IconButton(
+                              onPressed: () async {
+                                setState(() {
+                                  isWait = true;
+                                });
+                                final box = context.findRenderObject() as RenderBox?;
+                                var file = await DefaultCacheManager()
+                                    .getSingleFile(video.link);
+                                await Share.share(file.path,
+                                    sharePositionOrigin:
+                                    box!.localToGlobal(Offset.zero) &
+                                    box.size)
+                                    .whenComplete(() {
+                                  setState(() {
+                                    isWait = false;
+
+                                  });
+                                  AdInterstitialBottomSheet
+                                      .loadIntersitialAd();
+                                }
+                                    )
+                                    .whenComplete(() =>
+                                    AdInterstitialBottomSheet
+                                        .showInterstitialAd());
+
+                              },
+                              icon: const Icon(
+                                Icons.share,
+                                color: Colors.white,
+                                size: 30,
+                              ));
                         },
-                        icon: const Icon(Icons.share, color: Colors.white, size: 30),
                       ),
                     ],
                   ),

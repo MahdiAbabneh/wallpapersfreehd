@@ -11,7 +11,6 @@ class AdaptiveIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (Platform.isAndroid) {
       return  Padding(
         padding: const EdgeInsets.only(top: 20.0),
         child: LoadingAnimationWidget.staggeredDotsWave(
@@ -19,7 +18,5 @@ class AdaptiveIndicator extends StatelessWidget {
           size: MediaQuery.of(context).size.width * 0.4,
         ),
       );
-    }
-    return const CupertinoActivityIndicator();
   }
 }

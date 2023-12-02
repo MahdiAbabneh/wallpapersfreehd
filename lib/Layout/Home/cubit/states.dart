@@ -20,6 +20,8 @@ class WallpaperSearchImageLoading extends HomeStates {}
 
 class WallpaperSearchImageSuccess extends HomeStates {}
 
+class WallpaperSearchImageSuccessVideo extends HomeStates {}
+
 class WallpaperSearchImageError extends HomeStates {}
 
 class WallpaperGetDataFromDB extends HomeStates {}

@@ -129,7 +129,7 @@ class HomeCubit extends Cubit<HomeStates> {
       url: 'https://api.pexels.com/videos/search?query=$text&per_page=80',
     ).then((value) {
       curatedSearchVideo=VideoModel.fromJson(value.data);
-      emit(WallpaperSearchImageSuccess());
+      emit(WallpaperSearchImageSuccessVideo());
     }).catchError((error) {
       emit(WallpaperSearchImageError());
     });
