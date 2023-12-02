@@ -250,7 +250,7 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
                             });
                             final box = context.findRenderObject() as RenderBox?;
                             var file = await DefaultCacheManager().getSingleFile(video.link);
-                            await Share.share(file.path,
+                            await Share.shareFiles([file.path],
                                 sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size).whenComplete(() {
                               setState(() {
                                 isWait = false;

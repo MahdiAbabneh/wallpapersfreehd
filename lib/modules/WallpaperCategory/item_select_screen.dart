@@ -299,7 +299,7 @@ class ItemSelectScreen extends StatelessWidget {
                               return IconButton(onPressed: ()async{
                                 final box = context.findRenderObject() as RenderBox?;
                                 var file = await DefaultCacheManager().getSingleFile(model.src.portrait);
-                                await Share.share(file.path, sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
+                                await Share.shareFiles([file.path], sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
                               }, icon: const Icon(Icons.share,color: Colors.white,size: 30,));
                             },
                           ),

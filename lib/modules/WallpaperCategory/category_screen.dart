@@ -395,7 +395,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                   .getSingleFile(item
                                                                   .src
                                                                   .portrait);
-                                                              await Share.share(file.path,
+                                                              await Share.shareFiles([file.path],
                                                                   sharePositionOrigin:
                                                                   box!.localToGlobal(Offset.zero) &
                                                                   box.size)
@@ -730,8 +730,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                   .src
                                                                   .portrait);
                                                               await Share
-                                                                  .share(
-                                                                file.path,sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+                                                                  .shareFiles(
+                                                                [file.path],sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
                                                               )
                                                                   .whenComplete(() =>
                                                                   AdInterstitialBottomSheet
@@ -1042,7 +1042,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                         final box = context.findRenderObject() as RenderBox?;
 
                                                                         var file = await DefaultCacheManager().getSingleFile(fileV.link);
-                                                                        await Share.share(file.path,
+                                                                        await Share.shareFiles([file.path],
                                                                           sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete((){
                                                                           setState(() {
                                                                             isWait = false;
@@ -1241,7 +1241,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                 final box = context.findRenderObject() as RenderBox?;
 
                                                                 var file = await DefaultCacheManager().getSingleFile(fileV.link);
-                                                                await Share.share(file.path,
+                                                                await Share.shareFiles([file.path],
                                                                     sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size).whenComplete(() {
                                                                   setState(() {
                                                                     isWait = false;
