@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "Wallpapers Free HD" "\0"
+            VALUE "FileDescription", "Studio HD" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "Wallpapers Free HD" "\0"
+            VALUE "InternalName", "Studio HD" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
             VALUE "OriginalFilename", "wallpaper_app.exe" "\0"
-            VALUE "ProductName", "Wallpapers Free HD" "\0"
+            VALUE "ProductName", "Studio HD" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

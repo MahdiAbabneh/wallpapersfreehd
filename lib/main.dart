@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
             theme: FlexThemeData.dark(
               scheme: FlexScheme.mango,
               fontFamily:"mali"),
-            title: "Studio Free HD",
+            title: "Studio HD",
             debugShowCheckedModeBanner: false,
             home:HomeLayout(),
           );

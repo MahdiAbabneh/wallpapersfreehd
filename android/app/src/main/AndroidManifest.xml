@@ -2,7 +2,7 @@
     package="com.example.wallpaper_app">
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <application
-        android:label="Studio Free HD"
+        android:label="Studio HD"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
