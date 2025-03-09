@@ -87,7 +87,7 @@ class HomeCubit extends Cubit<HomeStates> {
   String file="original";
   Future<void> saveImageInGallery(String image) async {
     emit(WallpaperImageInGalleryLoading());
-    await GallerySaver.saveImage(image,albumName: 'Studio Free HD Images').then((value) {
+    await GallerySaver.saveImage(image,albumName: 'Studio HD Images').then((value) {
       emit(WallpaperImageInGallerySuccess());
     }).catchError((error) {
       emit(WallpaperImageInGalleryError());
@@ -96,7 +96,7 @@ class HomeCubit extends Cubit<HomeStates> {
 
   Future<void> saveVideoInGallery(String video) async {
     emit(WallpaperImageInGalleryLoading());
-    await GallerySaver.saveVideo(video,albumName: 'Studio Free HD Videos').then((value) {
+    await GallerySaver.saveVideo(video,albumName: 'Studio HD Videos').then((value) {
       emit(WallpaperImageInGallerySuccess());
     }).catchError((error) {
       emit(WallpaperImageInGalleryError());
