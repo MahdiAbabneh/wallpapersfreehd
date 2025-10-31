@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:gallery_saver/gallery_saver.dart';
+import 'package:gal/gal.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
@@ -87,20 +87,32 @@ class HomeCubit extends Cubit<HomeStates> {
   String file="original";
   Future<void> saveImageInGallery(String image) async {
     emit(WallpaperImageInGalleryLoading());
-    await GallerySaver.saveImage(image,albumName: 'Studio HD Images').then((value) {
+    try {
+      String path = image;
+      if (image.startsWith('http')) {
+        final file = await DefaultCacheManager().getSingleFile(image);
+        path = file.path;
+      }
+      await Gal.putImage(path, album: 'Studio HD Images');
       emit(WallpaperImageInGallerySuccess());
-    }).catchError((error) {
+    } catch (error) {
       emit(WallpaperImageInGalleryError());
-    });
+    }
   }
 
   Future<void> saveVideoInGallery(String video) async {
     emit(WallpaperImageInGalleryLoading());
-    await GallerySaver.saveVideo(video,albumName: 'Studio HD Videos').then((value) {
+    try {
+      String path = video;
+      if (video.startsWith('http')) {
+        final file = await DefaultCacheManager().getSingleFile(video);
+        path = file.path;
+      }
+      await Gal.putVideo(path, album: 'Studio HD Videos');
       emit(WallpaperImageInGallerySuccess());
-    }).catchError((error) {
+    } catch (error) {
       emit(WallpaperImageInGalleryError());
-    });
+    }
   }
 
 
@@ -296,14 +308,24 @@ class HomeCubit extends Cubit<HomeStates> {
     croppedImageFile = await ImageCropper().cropImage(
       compressFormat: selectedTypeImage=="PNG"?ImageCompressFormat.png:ImageCompressFormat.jpg,
         sourcePath: file.path,
-        aspectRatioPresets: [
-          CropAspectRatioPreset.square,
-          CropAspectRatioPreset.ratio3x2,
-          CropAspectRatioPreset.original,
-          CropAspectRatioPreset.ratio4x3,
-          CropAspectRatioPreset.ratio16x9
-        ],
-    ).then((value) {
+      uiSettings: [
+      AndroidUiSettings(
+      toolbarTitle: 'Cropper',
+      toolbarColor: Colors.deepOrange,
+      toolbarWidgetColor: Colors.white,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.original,
+        CropAspectRatioPreset.square,
+      ],
+    ),
+    IOSUiSettings(
+    title: 'Cropper',
+    aspectRatioPresets: [
+    CropAspectRatioPreset.original,
+    CropAspectRatioPreset.square,
+    ],
+    )
+    ]).then((value) {
       saveImageInGallery(value!.path);
       emit(WallpaperCroppedImageSuccess());
     }).catchError((error) {

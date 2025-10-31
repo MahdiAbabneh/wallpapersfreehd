@@ -1,8 +1,8 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
-import 'package:empty_widget/empty_widget.dart';
-import 'package:fijkplayer/fijkplayer.dart';
+import 'package:wallpaper_app/Compouents/empty_widget.dart';
+import 'package:wallpaper_app/compat/fijk_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -327,7 +327,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               borderSide: BorderSide.none,
               isDense: true,
               context: context,
-              dialogType: DialogType.NO_HEADER,
+              dialogType: DialogType.noHeader,
               body: Container(
                   height: MediaQuery.of(context).size.height * 0.7,
                   width: double.infinity,

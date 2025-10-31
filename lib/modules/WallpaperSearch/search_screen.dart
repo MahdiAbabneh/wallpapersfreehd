@@ -1,8 +1,8 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:custom_radio_grouped_button/custom_radio_grouped_button.dart';
-import 'package:empty_widget/empty_widget.dart';
-import 'package:fijkplayer/fijkplayer.dart';
+import 'package:wallpaper_app/Compouents/empty_widget.dart';
+import 'package:wallpaper_app/compat/fijk_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -113,37 +113,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           children:[
                             Column(
                               children: [
-                                TypeAheadFormField(
+                                TypeAheadField<Map<String, String>>(
                                   loadingBuilder: (context) => Center(child: const AdaptiveIndicator()),
-                                  textFieldConfiguration: TextFieldConfiguration(
-                                    autofocus:autoFocusText,
-                                    onSubmitted: (value) {
-                                      if(JosKeys.formKeyForSearchPhotos.currentState!.validate())
-                                      {
-                                        if(value.toString().toLowerCase()=="sex"||
-                                            value.toString().toLowerCase()=="gay"||
-                                            value.toString().toLowerCase()=="ass"||
-                                            value.toString().toLowerCase()=="boobs")
-                                        {
-                                          awesomeDialogFailed(context,"Some words cannot be searched :) ");
-
-                                        }
-                                        else
-                                        {
-                                          searchPhotosController.text=value.toString().toLowerCase();
-                                          cubit.searchImages(value.toString().toLowerCase());
-                                        }
-                                      }
-
-                                      return null;
-                                    },
-                                    controller: searchPhotosController,
-
-                                    decoration: InputDecoration(
-                                        prefixIcon: Icon(Icons.image_outlined),
-                                        border: OutlineInputBorder(),
-                                        label: Text('Search Photo')),
-                                  ),
                                   suggestionsCallback: (pattern) async {
                                     return await BackendService.getSuggestions(pattern);
                                   },
@@ -152,14 +123,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                       title: Text(suggestion['name']!),
                                     );
                                   },
-                                  validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return inputText;
-                                    }
-                                    return null;
-                                  },
-
-                                  onSuggestionSelected: (Map<String, String> suggestion) {
+                                  onSelected: (Map<String, String> suggestion) {
                                     if(JosKeys.formKeyForSearchPhotos.currentState!.validate())
                                     {
                                       if(suggestion['name']!.toString().toLowerCase()=="sex"||
@@ -168,17 +132,46 @@ class _SearchScreenState extends State<SearchScreen> {
                                           suggestion['name']!.toString().toLowerCase()=="boobs")
                                       {
                                         awesomeDialogFailed(context,"Some words cannot be searched :) ");
-
                                       }
                                       else
                                       {
-                                        searchPhotosController.text=suggestion['name']!.toString().toLowerCase();
                                         cubit.searchImages(suggestion['name']!.toString().toLowerCase());
                                       }
                                     }
-
-                                    return null;
-
+                                  },
+                                  builder: (context, controller, focusNode) {
+                                    return TextFormField(
+                                      autofocus: autoFocusText,
+                                      controller: controller,
+                                      focusNode: focusNode,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return inputText;
+                                        }
+                                        return null;
+                                      },
+                                      onFieldSubmitted: (value) {
+                                        if(JosKeys.formKeyForSearchPhotos.currentState!.validate())
+                                        {
+                                          if(value.toString().toLowerCase()=="sex"||
+                                              value.toString().toLowerCase()=="gay"||
+                                              value.toString().toLowerCase()=="ass"||
+                                              value.toString().toLowerCase()=="boobs")
+                                          {
+                                            awesomeDialogFailed(context,"Some words cannot be searched :) ");
+                                          }
+                                          else
+                                          {
+                                            controller.text = value.toString().toLowerCase();
+                                            cubit.searchImages(value.toString().toLowerCase());
+                                          }
+                                        }
+                                      },
+                                      decoration: InputDecoration(
+                                          prefixIcon: Icon(Icons.image_outlined),
+                                          border: OutlineInputBorder(),
+                                          label: Text('Search Photo')),
+                                    );
                                   },
                                 ),
                                 const SizedBox(
@@ -230,37 +223,8 @@ class _SearchScreenState extends State<SearchScreen> {
                           children:[
                             Column(
                               children: [
-                                TypeAheadFormField(
+                                TypeAheadField<Map<String, String>>(
                                   loadingBuilder: (context) => Center(child: const AdaptiveIndicator()),
-                                  textFieldConfiguration: TextFieldConfiguration(
-                                    autofocus:autoFocusText,
-                                    onSubmitted: (value) {
-                                      if(JosKeys.formKeyForSearchVideos.currentState!.validate())
-                                      {
-                                        if(value.toString().toLowerCase()=="sex"||
-                                            value.toString().toLowerCase()=="gay"||
-                                            value.toString().toLowerCase()=="ass"||
-                                            value.toString().toLowerCase()=="boobs")
-                                        {
-                                          awesomeDialogFailed(context,"Some words cannot be searched :) ");
-
-                                        }
-                                        else
-                                        {
-                                          searchVideosController.text=value.toString().toLowerCase();
-                                          cubit.searchVideo(value.toString().toLowerCase());
-                                        }
-                                      }
-
-                                      return null;
-                                    },
-                                    controller: searchVideosController,
-
-                                    decoration: InputDecoration(
-                                        prefixIcon: Icon(Icons.video_camera_back_outlined),
-                                        border: OutlineInputBorder(),
-                                        label: Text('Search Video')),
-                                  ),
                                   suggestionsCallback: (pattern) async {
                                     return await BackendService.getSuggestions(pattern);
                                   },
@@ -269,14 +233,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                       title: Text(suggestion['name']!),
                                     );
                                   },
-                                  validator: (value) {
-                                    if (value!.isEmpty) {
-                                      return inputText;
-                                    }
-                                    return null;
-                                  },
-
-                                  onSuggestionSelected: (Map<String, String> suggestion) {
+                                  onSelected: (Map<String, String> suggestion) {
                                     if(JosKeys.formKeyForSearchVideos.currentState!.validate())
                                     {
                                       if(suggestion['name']!.toString().toLowerCase()=="sex"||
@@ -285,17 +242,46 @@ class _SearchScreenState extends State<SearchScreen> {
                                           suggestion['name']!.toString().toLowerCase()=="boobs")
                                       {
                                         awesomeDialogFailed(context,"Some words cannot be searched :) ");
-
                                       }
                                       else
                                       {
-                                        searchVideosController.text=suggestion['name']!.toString().toLowerCase();
                                         cubit.searchVideo(suggestion['name']!.toString().toLowerCase());
                                       }
                                     }
-
-                                    return null;
-
+                                  },
+                                  builder: (context, controller, focusNode) {
+                                    return TextFormField(
+                                      autofocus: autoFocusText,
+                                      controller: controller,
+                                      focusNode: focusNode,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return inputText;
+                                        }
+                                        return null;
+                                      },
+                                      onFieldSubmitted: (value) {
+                                        if(JosKeys.formKeyForSearchVideos.currentState!.validate())
+                                        {
+                                          if(value.toString().toLowerCase()=="sex"||
+                                              value.toString().toLowerCase()=="gay"||
+                                              value.toString().toLowerCase()=="ass"||
+                                              value.toString().toLowerCase()=="boobs")
+                                          {
+                                            awesomeDialogFailed(context,"Some words cannot be searched :) ");
+                                          }
+                                          else
+                                          {
+                                            controller.text = value.toString().toLowerCase();
+                                            cubit.searchVideo(value.toString().toLowerCase());
+                                          }
+                                        }
+                                      },
+                                      decoration: InputDecoration(
+                                          prefixIcon: Icon(Icons.video_camera_back_outlined),
+                                          border: OutlineInputBorder(),
+                                          label: Text('Search Video')),
+                                    );
                                   },
                                 ),
                                 const SizedBox(
