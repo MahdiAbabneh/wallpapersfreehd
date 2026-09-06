@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 4.0.0+10
 
 environment:
-  sdk: '>=2.19.1 <3.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -46,15 +46,15 @@ dependencies:
   shared_preferences: ^2.0.18
   rename: ^3.1.0
   flutter_native_splash: ^2.2.19
-  google_mobile_ads: ^6.0.0
-  image_cropper: ^11.0.0
+  google_mobile_ads: ^9.1.0
+  image_cropper: ^12.2.1
   flutter_cache_manager: ^3.3.0
-  flutter_keyboard_visibility: ^6.0.0
+  flutter_keyboard_visibility: ^7.0.1
   photo_view: ^0.15.0
-  flutter_typeahead: ^5.2.0
+  flutter_typeahead: ^6.0.0
   custom_radio_grouped_button: ^2.2.0
-  share_plus: ^7.0.1
-  cached_network_image: ^3.3.1
+  share_plus: ^13.3.0
+  cached_network_image: ^4.0.0
   carousel_slider: ^5.1.1
   flutter_staggered_animations: ^1.1.1
   loading_animation_widget: ^1.2.0+4
@@ -65,18 +65,13 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
+  flutter_lints: ^6.0.0
 
 flutter_icons:
   android: true
   ios: true
   image_path: "assets/images/app_icon.jpg"
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^2.0.0
 
 flutter_native_splash:
   color: "#42a5f5"

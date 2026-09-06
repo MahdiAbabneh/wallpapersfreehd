@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:wallpaper_app/compat/share_compat.dart';
 import 'package:wallpaper_app/Compouents/adaptive_indicator.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Compouents/constants.dart';
@@ -338,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               textStyle: TextStyle(fontSize: 16)),
                                           radioButtonValue: (value)  {
                                             setState(() {
-                                              selectedTypeImage=value;
+                                              selectedTypeImage = value ?? selectedTypeImage;
                                             });
                                           },
                                           selectedColor: Theme.of(context).primaryColor,
@@ -400,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 final box = context.findRenderObject() as RenderBox?;
                                 var file = await DefaultCacheManager()
                                     .getSingleFile(model.src.portrait);
-                                await Share.shareFiles([file.path],
+                                await shareFiles([file.path],
                                         sharePositionOrigin:
                                             box!.localToGlobal(Offset.zero) &
                                                 box.size)
@@ -589,7 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 final box = context.findRenderObject() as RenderBox?;
                                 var file = await DefaultCacheManager()
                                     .getSingleFile(video.link);
-                                await Share.shareFiles([file.path],
+                                await shareFiles([file.path],
                                     sharePositionOrigin:
                                     box!.localToGlobal(Offset.zero) &
                                     box.size)

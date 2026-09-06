@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:wallpaper_app/compat/share_compat.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
@@ -263,7 +263,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                               return IconButton(onPressed: ()async{
                                 final box = context.findRenderObject() as RenderBox?;
                                 var file = await DefaultCacheManager().getSingleFile(image);
-                                await Share.shareFiles([file.path],
+                                await shareFiles([file.path],
                                   sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
                               }, icon: const Icon(Icons.share,color: Colors.white,size: 30,));
                             },
@@ -431,7 +431,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                             });
                             final box = context.findRenderObject() as RenderBox?;
                             var file = await DefaultCacheManager().getSingleFile(video);
-                            await Share.shareFiles([file.path],
+                            await shareFiles([file.path],
                               sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() {
                               setState(() {
                                 isWait = false;

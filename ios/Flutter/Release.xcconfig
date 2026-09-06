@@ -1,2 +1,6 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+
+// google_mobile_ads 9 imports a private GoogleMobileAds header from inside its
+// own module, and GeneratedPluginRegistrant builds that module with these flags
+CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES

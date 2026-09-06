@@ -8,7 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:wallpaper_app/compat/share_compat.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
@@ -326,7 +326,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                           buttonTextStyle: const ButtonTextStyle(selectedColor: Colors.white, unSelectedColor: Colors.white, textStyle: TextStyle(fontSize: 16)),
                                                                           radioButtonValue: (value) {
                                                                             setState(() {
-                                                                              selectedTypeImage = value;
+                                                                              selectedTypeImage = value ?? selectedTypeImage;
                                                                             });
                                                                           },
                                                                           selectedColor: Theme.of(context).primaryColor,
@@ -395,7 +395,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                   .getSingleFile(item
                                                                   .src
                                                                   .portrait);
-                                                              await Share.shareFiles([file.path],
+                                                              await shareFiles([file.path],
                                                                   sharePositionOrigin:
                                                                   box!.localToGlobal(Offset.zero) &
                                                                   box.size)
@@ -658,7 +658,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                           buttonTextStyle: const ButtonTextStyle(selectedColor: Colors.white, unSelectedColor: Colors.white, textStyle: TextStyle(fontSize: 16)),
                                                                           radioButtonValue: (value) {
                                                                             setState(() {
-                                                                              selectedTypeImage = value;
+                                                                              selectedTypeImage = value ?? selectedTypeImage;
                                                                             });
                                                                           },
                                                                           selectedColor: Theme.of(context).primaryColor,
@@ -729,8 +729,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                   .getSingleFile(item
                                                                   .src
                                                                   .portrait);
-                                                              await Share
-                                                                  .shareFiles(
+                                                              await shareFiles(
                                                                 [file.path],sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
                                                               )
                                                                   .whenComplete(() =>
@@ -1042,7 +1041,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                         final box = context.findRenderObject() as RenderBox?;
 
                                                                         var file = await DefaultCacheManager().getSingleFile(fileV.link);
-                                                                        await Share.shareFiles([file.path],
+                                                                        await shareFiles([file.path],
                                                                           sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete((){
                                                                           setState(() {
                                                                             isWait = false;
@@ -1241,7 +1240,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                 final box = context.findRenderObject() as RenderBox?;
 
                                                                 var file = await DefaultCacheManager().getSingleFile(fileV.link);
-                                                                await Share.shareFiles([file.path],
+                                                                await shareFiles([file.path],
                                                                     sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size).whenComplete(() {
                                                                   setState(() {
                                                                     isWait = false;

@@ -68,11 +68,16 @@ class HomeCubit extends Cubit<HomeStates> {
     });
   }
 
+  ///Pexels serves only 12 pages of popular videos, any page past that
+  ///comes back with an empty list, unlike curated photos which go past 180
+  static const int maxVideoPage = 12;
+  int videoPage(int? page) => (((page ?? 1) - 1) % maxVideoPage) + 1;
+
   Future<void> getHomeData2() async{
     curatedVideo=null;
     emit(WallpaperGetDataLoading());
     await  DioHelper.getData(
-      url: 'https://api.pexels.com/videos/popular/?page=$pageNumber&per_page=40',
+      url: 'https://api.pexels.com/videos/popular/?page=${videoPage(pageNumber)}&per_page=40',
     ).then((value) {
       curatedVideo=VideoModel.fromJson(value.data);
       emit(WallpaperGetDataSuccess());
@@ -360,7 +365,7 @@ class HomeCubit extends Cubit<HomeStates> {
   VideoModel? curatedVideoCategory;
   Future<void> getCategoryData2() async{
     curatedVideoCategory=null;
-    int randomNumber = generateRandomNumber(1, 180);
+    int randomNumber = generateRandomNumber(1, maxVideoPage);
     emit(WallpaperGetDataCategoryLoading());
     await  DioHelper.getData(
       url: 'https://api.pexels.com/videos/popular/?page=$randomNumber&per_page=40',
