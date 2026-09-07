@@ -4,6 +4,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:custom_radio_grouped_button/custom_radio_grouped_button.dart';
 import 'package:wallpaper_app/compat/fijk_compat.dart';
 import 'package:flutter/material.dart';
+import 'package:wallpaper_app/Compouents/image_urls.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -14,6 +15,7 @@ import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/cubit.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
+import 'package:wallpaper_app/models/curated_videos.dart';
 import 'package:wallpaper_app/models/CustomInterstitialAd.dart';
 import 'package:wallpaper_app/modules/WallpaperCategory/item_select_screen.dart';
 
@@ -88,7 +90,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(15),
-                            child: CarouselSlider(
+                            child: CarouselSlider.builder(
                               options: CarouselOptions(
                                 animateToClosest: true,
                                 initialPage: 0,
@@ -101,9 +103,19 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                 autoPlayCurve: Curves.fastLinearToSlowEaseIn,
                                 scrollDirection: Axis.horizontal,
                               ),
-                              items: state is WallpaperGetDataCategoryLoading
-                                  ? cubit.curatedPhotos!.photos
-                                  .map((item) => InkWell(
+                              itemCount: (state is WallpaperGetDataCategoryLoading
+                                      ? cubit.curatedPhotos?.photos
+                                      : cubit.curatedPhotosCategory?.photos)
+                                  ?.length ??
+                              0,
+                              ///the slides are built on demand: the old `items:`
+                              ///list rendered all 40 photos before the first frame
+                              itemBuilder: (context, index, realIndex) {
+                                final item =
+                                    (state is WallpaperGetDataCategoryLoading
+                                        ? cubit.curatedPhotos!.photos
+                                        : cubit.curatedPhotosCategory!.photos)[index];
+                                return InkWell(
                                 onTap: () {
                                   AwesomeDialog(
                                     barrierColor: Colors.transparent,
@@ -141,10 +153,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                       width:
                                                       double.infinity,
                                                       imageUrl: item
-                                                          .src.original,
-                                                      placeholder: (context,
-                                                          url) =>
-                                                          CircularProgressIndicator(),
+                                                          .src.large2x,
+                                                      placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                                                       errorWidget:
                                                           (context, url,
                                                           error) =>
@@ -192,9 +203,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                   fit: BoxFit.cover,
                                                   imageUrl:
                                                   item.src.portrait,
-                                                  placeholder: (context,
-                                                      url) =>
-                                                      CircularProgressIndicator(),
+                                                  placeholder: (context, url) => ImagePlaceholder(color: item.avgColor),
+                      fadeInDuration: const Duration(milliseconds: 250),
                                                   errorWidget: (context,
                                                       url, error) =>
                                                       Icon(Icons.error),
@@ -432,341 +442,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                             size: 30,
                                           ))
                                     ]),
-                              ))
-                                  .toList()
-                                  : cubit.curatedPhotosCategory!.photos
-                                  .map((item) => InkWell(
-                                onTap: () {
-                                  AwesomeDialog(
-                                    barrierColor: Colors.transparent,
-                                    dialogBackgroundColor:
-                                    Colors.transparent,
-                                    borderSide: BorderSide.none,
-                                    isDense: true,
-                                    body: Column(
-                                      children: <Widget>[
-                                        SizedBox(
-                                          height: 15,
-                                        ),
-                                        Container(
-                                          color: Colors.transparent,
-                                          height: MediaQuery.of(context)
-                                              .size
-                                              .height *
-                                              0.7,
-                                          child: ClipRect(
-                                            child: PhotoView.customChild(
-                                              backgroundDecoration:
-                                              const BoxDecoration(
-                                                  borderRadius:
-                                                  BorderRadius
-                                                      .all(Radius
-                                                      .circular(
-                                                      20)),
-                                                  color: Colors
-                                                      .transparent),
-                                              child: Container(
-                                                color: Colors.transparent,
-                                                child: Column(
-                                                  children: <Widget>[
-                                                    CachedNetworkImage(
-                                                      width:
-                                                      double.infinity,
-                                                      imageUrl: item
-                                                          .src.original,
-                                                      placeholder: (context,
-                                                          url) =>
-                                                          CircularProgressIndicator(),
-                                                      errorWidget:
-                                                          (context, url,
-                                                          error) =>
-                                                          Icon(Icons
-                                                              .error),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    btnOkColor: Colors.transparent,
-                                    showCloseIcon: true,
-                                    closeIcon: Padding(
-                                      padding:
-                                      const EdgeInsets.only(top: 8.0),
-                                      child: Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                        size: 30,
-                                      ),
-                                    ),
-                                    context: context,
-                                    animType: AnimType.leftSlide,
-                                    headerAnimationLoop: false,
-                                    dialogType: DialogType.noHeader,
-                                    title: saveImageDone,
-                                    onDismissCallback: (type) {},
-                                  ).show();
-                                },
-                                child: Stack(
-                                    alignment: Alignment.topRight,
-                                    children: [
-                                      Container(
-                                        child: Center(
-                                          child: Stack(
-                                              alignment:
-                                              Alignment.bottomCenter,
-                                              children: [
-                                                CachedNetworkImage(
-                                                  width: double.infinity,
-                                                  fit: BoxFit.cover,
-                                                  imageUrl:
-                                                  item.src.portrait,
-                                                  placeholder: (context,
-                                                      url) =>
-                                                      CircularProgressIndicator(),
-                                                  errorWidget: (context,
-                                                      url, error) =>
-                                                      Icon(Icons.error),
-                                                ),
-                                                Container(
-                                                  color:
-                                                  Colors.transparent,
-                                                  child: Row(
-                                                    crossAxisAlignment:
-                                                    CrossAxisAlignment
-                                                        .center,
-                                                    mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .center,
-                                                    children: [
-                                                      IconButton(
-                                                          onPressed: () {
-                                                            HomeCubit.get(
-                                                                context)
-                                                                .insertToDatabase(item
-                                                                .src
-                                                                .portrait,'',false);
-                                                          },
-                                                          icon: Icon(
-                                                            HomeCubit.get(
-                                                                context)
-                                                                .favoriteImage
-                                                                .contains(item
-                                                                .src
-                                                                .portrait)
-                                                                ? Icons
-                                                                .favorite
-                                                                : Icons
-                                                                .favorite_border,
-                                                            size: 30,
-                                                            color: HomeCubit.get(
-                                                                context)
-                                                                .favoriteImage
-                                                                .contains(item
-                                                                .src
-                                                                .portrait)
-                                                                ? Colors
-                                                                .red
-                                                                : Colors
-                                                                .white,
-                                                          )),
-                                                      IconButton(
-                                                          onPressed: () {
-                                                            HomeCubit.get(
-                                                                context)
-                                                                .file =
-                                                                item.src
-                                                                    .original;
-                                                            HomeCubit.get(
-                                                                context)
-                                                                .type =
-                                                            "original";
-                                                            selectedTypeImage =
-                                                            "JPG";
-                                                            AwesomeDialog(
-                                                              body:
-                                                              StatefulBuilder(
-                                                                builder: (BuildContext
-                                                                context,
-                                                                    void Function(void Function())
-                                                                    setState) {
-                                                                  return Column(
-                                                                    children: [
-                                                                      SizedBox(
-                                                                        height: 20,
-                                                                      ),
-                                                                      RadioListTile(
-                                                                        secondary: Icon(Icons.phone_android),
-                                                                        title: Text("Original"),
-                                                                        value: "original",
-                                                                        groupValue: HomeCubit.get(context).type,
-                                                                        onChanged: (value) {
-                                                                          setState(() {
-                                                                            HomeCubit.get(context).type = value.toString();
-                                                                            HomeCubit.get(context).file = item.src.original;
-                                                                          });
-                                                                        },
-                                                                      ),
-                                                                      RadioListTile(
-                                                                        secondary: Icon(Icons.stay_current_landscape),
-                                                                        title: Text("Landscape"),
-                                                                        value: "landscape",
-                                                                        groupValue: HomeCubit.get(context).type,
-                                                                        onChanged: (value) {
-                                                                          setState(() {
-                                                                            HomeCubit.get(context).type = value.toString();
-                                                                            HomeCubit.get(context).file = item.src.landscape;
-                                                                          });
-                                                                        },
-                                                                      ),
-                                                                      RadioListTile(
-                                                                        secondary: Icon(Icons.crop_rotate_sharp),
-                                                                        title: Text("Edit & Download"),
-                                                                        value: "Edit",
-                                                                        groupValue: HomeCubit.get(context).type,
-                                                                        onChanged: (value) {
-                                                                          setState(() {
-                                                                            HomeCubit.get(context).type = value.toString();
-                                                                            HomeCubit.get(context).file = item.src.original;
-                                                                          });
-                                                                        },
-                                                                      ),
-                                                                      SizedBox(
-                                                                        height: 5,
-                                                                      ),
-                                                                      if (HomeCubit.get(context).type ==
-                                                                          "Edit")
-                                                                        const Divider(),
-                                                                      if (HomeCubit.get(context).type ==
-                                                                          "Edit")
-                                                                        CustomRadioButton(
-                                                                          defaultSelected: selectedTypeImage,
-                                                                          elevation: 0,
-                                                                          absoluteZeroSpacing: true,
-                                                                          unSelectedColor: Theme.of(context).canvasColor,
-                                                                          buttonLables: [
-                                                                            'JPG',
-                                                                            'PNG'
-                                                                          ],
-                                                                          buttonValues: const [
-                                                                            'JPG',
-                                                                            'PNG'
-                                                                          ],
-                                                                          buttonTextStyle: const ButtonTextStyle(selectedColor: Colors.white, unSelectedColor: Colors.white, textStyle: TextStyle(fontSize: 16)),
-                                                                          radioButtonValue: (value) {
-                                                                            setState(() {
-                                                                              selectedTypeImage = value ?? selectedTypeImage;
-                                                                            });
-                                                                          },
-                                                                          selectedColor: Theme.of(context).primaryColor,
-                                                                        ),
-                                                                      const Divider(),
-                                                                    ],
-                                                                  );
-                                                                },
-                                                              ),
-                                                              btnOkColor:
-                                                              Theme.of(context)
-                                                                  .primaryColor,
-                                                              btnOkText:
-                                                              "Download",
-                                                              context:
-                                                              context,
-                                                              animType:
-                                                              AnimType
-                                                                  .leftSlide,
-                                                              headerAnimationLoop:
-                                                              false,
-                                                              dialogType:
-                                                              DialogType
-                                                                  .noHeader,
-                                                              showCloseIcon:
-                                                              true,
-                                                              title:
-                                                              saveImageDone,
-                                                              btnOkOnPress:
-                                                                  () {
-                                                                if (HomeCubit.get(context)
-                                                                    .type ==
-                                                                    "Edit") {
-                                                                  HomeCubit.get(context).croppedImage(item
-                                                                      .src
-                                                                      .portrait
-                                                                      .toString());
-                                                                } else {
-                                                                  HomeCubit.get(context)
-                                                                      .saveImageInGallery(HomeCubit.get(context).file);
-                                                                  showToastSuccess(
-                                                                      saveText,
-                                                                      context);
-                                                                }
-                                                              },
-                                                              btnOkIcon: Icons
-                                                                  .download,
-                                                              onDismissCallback:
-                                                                  (type) {},
-                                                            ).show();
-                                                          },
-                                                          icon:
-                                                          const Icon(
-                                                            Icons
-                                                                .file_download_outlined,
-                                                            color: Colors
-                                                                .white,
-                                                            size: 30,
-                                                          )),
-                                                      Builder(builder: (BuildContext context) {
-
-                                                        return IconButton(
-                                                            onPressed:
-                                                                () async {
-                                                                  final box = context.findRenderObject() as RenderBox?;
-
-                                                                  var file = await DefaultCacheManager()
-                                                                  .getSingleFile(item
-                                                                  .src
-                                                                  .portrait);
-                                                              await shareFiles(
-                                                                [file.path],sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
-                                                              )
-                                                                  .whenComplete(() =>
-                                                                  AdInterstitialBottomSheet
-                                                                      .loadIntersitialAd())
-                                                                  .whenComplete(() =>
-                                                                  AdInterstitialBottomSheet
-                                                                      .showInterstitialAd());
-                                                            },
-                                                            tooltip: "Share", icon:
-                                                            const Icon(
-                                                              Icons.share,
-                                                              color: Colors
-                                                                  .white,
-                                                              size: 30,
-                                                            ));
-                                                      },
-
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ]),
-                                        ),
-                                      ),
-                                      IconButton(
-                                          onPressed: () {
-                                            HomeCubit.get(context)
-                                                .getCategoryData();
-                                          },
-                                          icon: Icon(
-                                            Icons.replay_circle_filled,
-                                            size: 30,
-                                          ))
-                                    ]),
-                              ))
-                                  .toList(),
+                              );
+                              },
                             ),
                           ),
 
@@ -867,7 +544,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(15),
-                            child: CarouselSlider(
+                            child: CarouselSlider.builder(
                               options: CarouselOptions(
                                 animateToClosest: true,
                                 initialPage: 0,
@@ -880,11 +557,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                 autoPlayCurve: Curves.fastLinearToSlowEaseIn,
                                 scrollDirection: Axis.horizontal,
                               ),
-                              items: state is WallpaperGetDataCategoryLoading
-                                  ? cubit.curatedVideo!.videos.map((video) {
+                              itemCount: (state is WallpaperGetDataCategoryLoading
+                                      ? cubit.curatedVideo?.videos
+                                      : cubit.curatedVideoCategory?.videos)
+                                  ?.length ??
+                              0,
+                              ///built on demand, so opening the tab no longer
+                              ///renders every slide of the list up front
+                              itemBuilder: (context, index, realIndex) {
+                                final video =
+                                    (state is WallpaperGetDataCategoryLoading
+                                        ? cubit.curatedVideo!.videos
+                                        : cubit.curatedVideoCategory!.videos)[index];
                                 return Stack(
                                           children: [
-                                            ...video.videoFiles.map((fileV) {
+                                            ...[video.videoFiles.bestForPhone].map((fileV) {
                                               return InkWell(
                                                 onTap: (){
                                                   final FijkPlayer player = FijkPlayer();
@@ -897,11 +584,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                     context: context,
                                                     dialogType: DialogType.noHeader,
                                                     body: Container(
-                                                      height: MediaQuery.of(context).size.height * 0.7,
                                                       width: double.infinity,
                                                       child:Stack(
                                                         children: [
-                                                          AnimatedOpacity(
+                                                          Positioned.fill(
+                                                            child: AnimatedOpacity(
                                                             opacity: 0.75,
                                                             duration: Duration(seconds: 1),
                                                             child: Container(
@@ -910,10 +597,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                               child: CachedNetworkImage(
                                                                 fit: BoxFit.cover,
                                                                 imageUrl: video.image,
-                                                                placeholder: (context, url) => CircularProgressIndicator(),
+                                                                placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                                                                 errorWidget: (context, url, error) => Icon(Icons.error),
                                                               ),
                                                             ),
+                                                          ),
                                                           ),
                                                           FijkView(color: Colors.transparent,
                                                             player: player,
@@ -932,7 +621,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                     headerAnimationLoop: false,
                                                     title: saveImageDone,
                                                     onDismissCallback: (type) {
-                                                      player.pause(); // Pause the video when the dialog is dismissed
+                                                      player.dispose(); // free the decoder when the dialog is dismissed
                                                     },
                                                   )..show();
 
@@ -952,7 +641,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                   child: CachedNetworkImage(
                                                                     fit: BoxFit.cover,
                                                                     imageUrl: video.image,
-                                                                    placeholder: (context, url) => CircularProgressIndicator(),
+                                                                    placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                                                                     errorWidget: (context, url, error) => Icon(Icons.error),
                                                                   ),
                                                                 ),
@@ -1080,206 +770,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                             })
                                           ],
                                         );
-                                      }).toList()
-                                    : cubit.curatedVideoCategory!.videos.map((video) {
-                                return Stack(
-                                  children: [
-                                    ...video.videoFiles.map((fileV) {
-                                      return InkWell(
-                                        onTap: (){
-                                          final FijkPlayer player = FijkPlayer();
-                                          player.setDataSource(fileV.link, autoPlay: true,showCover: true);
-                                          AwesomeDialog(
-                                            barrierColor: Colors.transparent,
-                                            dialogBackgroundColor: Colors.transparent,
-                                            borderSide: BorderSide.none,
-                                            isDense: true,
-                                            context: context,
-                                            dialogType: DialogType.noHeader,
-                                            body: Container(
-                                              height: MediaQuery.of(context).size.height * 0.7,
-                                              width: double.infinity,
-                                              child:Stack(
-                                                children: [
-                                                  AnimatedOpacity(
-                                                    opacity: 0.75,
-                                                    duration: Duration(seconds: 1),
-                                                    child: Container(
-                                                      width: double.infinity,
-                                                      height: MediaQuery.of(context).size.height,
-                                                      child: CachedNetworkImage(
-                                                        fit: BoxFit.cover,
-                                                        imageUrl: video.image,
-                                                        placeholder: (context, url) => CircularProgressIndicator(),
-                                                        errorWidget: (context, url, error) => Icon(Icons.error),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  FijkView(color: Colors.transparent,
-                                                    player: player,
-
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            btnOkColor: Colors.transparent,
-                                            showCloseIcon: true,
-                                            closeIcon: Padding(
-                                              padding: const EdgeInsets.only(top: 8.0),
-                                              child: Icon(Icons.close, color: Colors.white, size: 30,),
-                                            ),
-                                            animType: AnimType.leftSlide,
-                                            headerAnimationLoop: false,
-                                            title: saveImageDone,
-                                            onDismissCallback: (type) {
-                                              player.pause(); // Pause the video when the dialog is dismissed
-                                            },
-                                          )..show();
-
-
-
-                                        },
-                                        child: Stack(
-                                            alignment: Alignment.topRight,
-                                            children: [
-                                              Stack(alignment: Alignment.bottomCenter,
-                                                  children: [
-                                                    Stack(alignment: Alignment.center,
-                                                      children: [
-                                                        Container(
-                                                          width: double.infinity,
-                                                          height: MediaQuery.of(context).size.height,
-                                                          child: CachedNetworkImage(
-                                                            fit: BoxFit.cover,
-                                                            imageUrl: video.image,
-                                                            placeholder: (context, url) => CircularProgressIndicator(),
-                                                            errorWidget: (context, url, error) => Icon(Icons.error),
-                                                          ),
-                                                        ),
-                                                        Icon(Icons.play_circle, color: Colors.white70, size: 70),                  ],
-                                                    ),
-                                                    Container(
-                                                      color: Colors.transparent,
-                                                      child: Row(
-                                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                                        mainAxisAlignment: MainAxisAlignment.center,
-                                                        children: [
-                                                          IconButton(
-                                                            onPressed: () async {
-                                                              AwesomeDialog(
-                                                                body: StatefulBuilder(
-                                                                  builder: (BuildContext context, void Function(void Function()) setState) {
-                                                                    return Column(
-                                                                      children: [
-                                                                        Text('Type: ${fileV.fileType}', style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                                                        SizedBox(height: 8),
-                                                                        Text(
-                                                                          'Quality: ${fileV.quality}',
-                                                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                                                        ),
-                                                                        SizedBox(height: 8),
-                                                                        Text(
-                                                                          'Duration: ${video.duration}.s',
-                                                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                                                        ),
-                                                                        SizedBox(height: 8),
-                                                                        Text(
-                                                                          'Quality: ${fileV.quality}',
-                                                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                                                        ),
-                                                                        SizedBox(height: 8),
-                                                                        Text('Width: ${fileV.width}', style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                                                        SizedBox(height: 8),
-                                                                        Text('Height: ${fileV.height}', style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                                                        SizedBox(height: 8),
-                                                                        Text('FPS: ${fileV.fps}', style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-                                                                        SizedBox(height: 10,),
-                                                                      ],
-                                                                    );
-                                                                  },
-                                                                ),
-                                                                // customHeader: Icon(Icons.install_mobile_outlined,size:100,color: Theme.of(context).primaryColor,),
-                                                                btnOkColor: Theme.of(context).primaryColor,
-                                                                btnOkText: "Download",
-                                                                context: context,
-                                                                animType: AnimType.leftSlide,
-                                                                headerAnimationLoop: false,
-                                                                dialogType: DialogType.noHeader,
-                                                                showCloseIcon: true,
-                                                                title: saveImageDone,
-                                                                btnOkOnPress: () {
-                                                                  HomeCubit.get(context).saveVideoInGallery(fileV.link).whenComplete(() => showToastSuccess(saveText, context)
-                                                                  );
-                                                                },
-                                                                btnOkIcon: Icons.download,
-                                                                onDismissCallback: (type) {},
-                                                              ).show();
-
-
-                                                            },
-                                                            tooltip: "Download", icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
-                                                          ),
-                                                          IconButton(onPressed: (){
-                                                            HomeCubit.get(context).insertToDatabase(fileV.link.toString(),video.image,true);
-                                                          },
-                                                              tooltip: "Favorite", icon: Icon(
-                                                                HomeCubit.get(context)
-                                                                    .favoriteVideo
-                                                                    .contains(fileV.link.toString())
-                                                                    ? Icons.favorite
-                                                                    : Icons.favorite_border,size: 30,
-                                                                color: HomeCubit.get(context)
-                                                                    .favoriteVideo
-                                                                    .contains(fileV.link.toString())
-                                                                    ? Colors.red
-                                                                    : Colors.white,
-                                                              )),
-                                                          Builder(builder: (BuildContext context) {
-
-                                                            return IconButton(
-                                                              onPressed: () async {
-                                                                setState(() {
-                                                                  isWait = true;
-                                                                });
-                                                                final box = context.findRenderObject() as RenderBox?;
-
-                                                                var file = await DefaultCacheManager().getSingleFile(fileV.link);
-                                                                await shareFiles([file.path],
-                                                                    sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size).whenComplete(() {
-                                                                  setState(() {
-                                                                    isWait = false;
-                                                                  });
-                                                                  AdInterstitialBottomSheet.loadIntersitialAd();
-                                                                }
-                                                                    ).whenComplete(() =>
-                                                                    AdInterstitialBottomSheet.showInterstitialAd());
-                                                              },
-                                                              tooltip: "Share", icon: const Icon(Icons.share, color: Colors.white, size: 30),
-                                                            );
-                                                          },
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    )
-
-
-                                                  ]
-                                              ),
-                                              IconButton(
-                                                  onPressed: () {
-                                                    HomeCubit.get(context)
-                                                        .getCategoryData2();
-                                                  },
-                                                  icon: Icon(
-                                                    Icons.replay_circle_filled,
-                                                    size: 30,
-                                                  ))
-                                            ]),
-                                      );
-                                    })
-                                  ],
-                                );
-                              }).toList()
+                              },
                             ),
                           ),
                           Divider()

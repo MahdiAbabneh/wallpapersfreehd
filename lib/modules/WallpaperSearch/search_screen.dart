@@ -1,9 +1,12 @@
+import 'package:wallpaper_app/models/curated_videos.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:custom_radio_grouped_button/custom_radio_grouped_button.dart';
 import 'package:wallpaper_app/Compouents/empty_widget.dart';
 import 'package:wallpaper_app/compat/fijk_compat.dart';
 import 'package:flutter/material.dart';
+import 'package:wallpaper_app/Compouents/image_urls.dart';
+import 'package:wallpaper_app/Compouents/endless_scroll.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -15,11 +18,9 @@ import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/cubit.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
-import 'package:wallpaper_app/models/curated_photos.dart';
 
 import '../../models/BackendService.dart';
 import '../../models/CustomInterstitialAd.dart';
-import '../../models/curated_videos.dart';
 
 
 class SearchScreen extends StatefulWidget {
@@ -180,36 +181,37 @@ class _SearchScreenState extends State<SearchScreen> {
                               ],
                             ),
                             Expanded(
-                              child: Scrollbar(
-                                child: SingleChildScrollView(
-                                  child: Column(
-                                    children: [
-                                      if (cubit.curatedSearchPhotos!=null)
-                                        builderWidget(cubit.curatedSearchPhotos,context,state),
-                                      if (cubit.curatedSearchPhotos==null&&state is !WallpaperSearchImageLoading)
-                                        Center(
-                                          child: EmptyWidget(
-                                            hideBackgroundAnimation: true,
-                                            image: null,
-                                            packageImage: PackageImage.Image_1,
-                                            title: noImagesFound,
-                                            subTitle: inputValidText,
-                                            titleTextStyle: const TextStyle(
-                                              fontSize: 22,
-                                              color: Color(0xff9da9c7),
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            subtitleTextStyle: const TextStyle(
-                                              fontSize: 14,
-                                              color: Color(0xffabb8d6),
-                                            ),
-                                          ),
-                                        ),
-                                      if(state is WallpaperSearchImageLoading)
-                                        Center(child: const AdaptiveIndicator()),
-                                    ],
+                              child: PagedGrid(
+                                cursor: cubit.searchPhotoCursor,
+                                onLoadMore: () =>
+                                    cubit.searchImages(null, more: true),
+                                itemCount:
+                                    cubit.curatedSearchPhotos?.photos.length ?? 0,
+                                itemBuilder: (context, index) => buildGridProduct(
+                                    cubit.curatedSearchPhotos!.photos[index],
+                                    context),
+                                placeholder: cubit.curatedSearchPhotos != null
+                                    ? null
+                                    : state is WallpaperSearchImageLoading
+                                        ? const Center(child: AdaptiveIndicator())
+                                        : Center(
+                                child: EmptyWidget(
+                                  hideBackgroundAnimation: true,
+                                  image: null,
+                                  packageImage: PackageImage.Image_1,
+                                  title: noImagesFound,
+                                  subTitle: inputValidText,
+                                  titleTextStyle: const TextStyle(
+                                    fontSize: 22,
+                                    color: Color(0xff9da9c7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  subtitleTextStyle: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xffabb8d6),
                                   ),
                                 ),
+                              ),
                               ),
                             )
                           ]),
@@ -290,36 +292,43 @@ class _SearchScreenState extends State<SearchScreen> {
                               ],
                             ),
                             Expanded(
-                              child: Scrollbar(
-                                child: SingleChildScrollView(
-                                  child: Column(
-                                    children: [
-                                      if (cubit.curatedSearchVideo!=null)
-                                        builderWidget2(cubit.curatedSearchVideo,context,state),
-                                      if (cubit.curatedSearchVideo==null&&state is !WallpaperSearchImageLoading)
-                                        Center(
-                                          child: EmptyWidget(
-                                            hideBackgroundAnimation: true,
-                                            image: null,
-                                            packageImage: PackageImage.Image_1,
-                                            title: noImagesFound,
-                                            subTitle: inputValidText,
-                                            titleTextStyle: const TextStyle(
-                                              fontSize: 22,
-                                              color: Color(0xff9da9c7),
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            subtitleTextStyle: const TextStyle(
-                                              fontSize: 14,
-                                              color: Color(0xffabb8d6),
-                                            ),
-                                          ),
-                                        ),
-                                      if (state is WallpaperSearchImageLoading)
-                                        Center(child: const AdaptiveIndicator()),
-                                    ],
+                              child: PagedGrid(
+                                cursor: cubit.searchVideoCursor,
+                                onLoadMore: () =>
+                                    cubit.searchVideo(null, more: true),
+                                itemCount: cubit.curatedSearchVideo?.videos
+                                        .where((v) => v.videoFiles.isNotEmpty)
+                                        .length ??
+                                    0,
+                                itemBuilder: (context, index) {
+                                  final video = cubit.curatedSearchVideo!.videos
+                                      .where((v) => v.videoFiles.isNotEmpty)
+                                      .elementAt(index);
+                                  return buildGridProduct2(
+                                      video, video.videoFiles.bestForPhone, context);
+                                },
+                                placeholder: cubit.curatedSearchVideo != null
+                                    ? null
+                                    : state is WallpaperSearchImageLoading
+                                        ? const Center(child: AdaptiveIndicator())
+                                        : Center(
+                                child: EmptyWidget(
+                                  hideBackgroundAnimation: true,
+                                  image: null,
+                                  packageImage: PackageImage.Image_1,
+                                  title: noImagesFound,
+                                  subTitle: inputValidText,
+                                  titleTextStyle: const TextStyle(
+                                    fontSize: 22,
+                                    color: Color(0xff9da9c7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  subtitleTextStyle: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xffabb8d6),
                                   ),
                                 ),
+                              ),
                               ),
                             )
                           ]),
@@ -331,25 +340,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
       });
   }
-
-  Widget builderWidget(CuratedPhotos? model,context,state) =>
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GridView.count(
-              padding: const EdgeInsets.all(10),
-              primary: true,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 10.0,
-              crossAxisSpacing: 15.0,
-              childAspectRatio: 1 / 1.50,
-              children:
-              List.generate(model!.photos.length,(index)=>buildGridProduct(model.photos[index],context))),
-          const SizedBox(height: 20,)
-        ],
-      );
 
   Widget buildGridProduct(model,context) =>
       Container(decoration: BoxDecoration(border:Border.all(color: Theme.of(context).primaryColor) ),
@@ -370,7 +360,18 @@ class _SearchScreenState extends State<SearchScreen> {
                         child: Container(color: Colors.transparent,
                           child: Column(
                             children: <Widget>[
-                              Image.network(model.src.portrait),
+                              CachedNetworkImage(
+                                imageUrl: model.src.portrait,
+                                ///the grid already cached a small copy, so the
+                                ///preview opens instantly and then sharpens
+                                placeholder: (context, url) => CachedNetworkImage(
+                                  imageUrl: thumbUrl(model.src.portrait),
+                                  errorWidget: (context, url, error) =>
+                                      const ImagePlaceholder(),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
+                              ),
                             ],
                           ),
                         ),
@@ -400,8 +401,9 @@ class _SearchScreenState extends State<SearchScreen> {
               Stack(alignment: Alignment.bottomCenter,
                   children: [
                     CachedNetworkImage(width: double.infinity,fit: BoxFit.fill,
-                      imageUrl:model.src.portrait,
-                      placeholder: (context, url) => CircularProgressIndicator(),
+                      imageUrl:thumbUrl(model.src.portrait), memCacheWidth: 600,
+                      placeholder: (context, url) => ImagePlaceholder(color: model.avgColor),
+                      fadeInDuration: const Duration(milliseconds: 250),
                       errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                     Container(color: Colors.transparent,
@@ -571,11 +573,11 @@ class _SearchScreenState extends State<SearchScreen> {
               context: context,
               dialogType: DialogType.noHeader,
               body: Container(
-                height: MediaQuery.of(context).size.height * 0.7,
                 width: double.infinity,
                 child:Stack(
                   children: [
-                    AnimatedOpacity(
+                    Positioned.fill(
+                      child: AnimatedOpacity(
                       opacity: 0.75,
                       duration: Duration(seconds: 1),
                       child: Container(
@@ -584,10 +586,12 @@ class _SearchScreenState extends State<SearchScreen> {
                         child: CachedNetworkImage(
                           fit: BoxFit.cover,
                           imageUrl: model.image,
-                          placeholder: (context, url) => CircularProgressIndicator(),
+                          placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                           errorWidget: (context, url, error) => Icon(Icons.error),
                         ),
                       ),
+                    ),
                     ),
                     FijkView(color: Colors.transparent,
                       player: player,
@@ -606,7 +610,7 @@ class _SearchScreenState extends State<SearchScreen> {
               headerAnimationLoop: false,
               title: saveImageDone,
               onDismissCallback: (type) {
-                player.pause(); // Pause the video when the dialog is dismissed
+                player.dispose(); // free the decoder when the dialog is dismissed
               },
             )..show();
 
@@ -622,8 +626,9 @@ class _SearchScreenState extends State<SearchScreen> {
                       height: MediaQuery.of(context).size.height,
                       child: CachedNetworkImage(
                         fit: BoxFit.cover,
-                        imageUrl: model.image,
-                        placeholder: (context, url) => CircularProgressIndicator(),
+                        imageUrl: thumbUrl(model.image), memCacheWidth: 600,
+                        placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                         errorWidget: (context, url, error) => Icon(Icons.error),
                       ),
                     ),
@@ -739,35 +744,4 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       );
 
-  Widget builderWidget2(VideoModel? model, context, state) => SingleChildScrollView(
-    physics: const BouncingScrollPhysics(),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GridView.count(
-          padding: EdgeInsets.all(5),
-          primary: true,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: 10.0,
-          crossAxisSpacing: 15.0,
-          childAspectRatio: 1 / 1.50,
-          children:  List.generate(
-            model?.videos.length ?? 0,
-                (videoIndex) => Stack(
-              children: List.generate(
-                model?.videos[videoIndex].videoFiles.length ?? 0,
-                    (fileIndex) => buildGridProduct2(
-                    model?.videos[videoIndex],
-                    model?.videos[videoIndex].videoFiles[fileIndex],
-                    context
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
 }

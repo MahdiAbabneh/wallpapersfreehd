@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 
-int ?pageNumber;
 bool autoFocusText=false;
 bool isWait=false;
 String titleCategory="";

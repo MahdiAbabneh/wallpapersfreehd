@@ -151,3 +151,24 @@ class VideoPicture {
     );
   }
 }
+
+extension PlayableVideoFiles on List<VideoFile> {
+  ///Pexels lists a video's renditions in no fixed order: the last entry can be a
+  ///240p file or a 4K master (a 4K clip runs tens of megabytes and takes ages to
+  ///buffer before it starts). Pick the largest rendition that still suits a
+  ///phone, so playback starts quickly and the download stays reasonable.
+  VideoFile get bestForPhone {
+    const int maxSide = 1500;
+    int longest(VideoFile f) => f.width > f.height ? f.width : f.height;
+
+    final List<VideoFile> fits =
+        where((f) => f.link.isNotEmpty && longest(f) <= maxSide).toList()
+          ..sort((a, b) => longest(b).compareTo(longest(a)));
+    if (fits.isNotEmpty) return fits.first;
+
+    ///every rendition is oversized: take the smallest one on offer
+    final List<VideoFile> rest = List<VideoFile>.from(this)
+      ..sort((a, b) => longest(a).compareTo(longest(b)));
+    return rest.first;
+  }
+}

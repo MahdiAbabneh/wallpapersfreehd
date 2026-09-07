@@ -1,9 +1,10 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:custom_radio_grouped_button/custom_radio_grouped_button.dart';
 import 'package:wallpaper_app/Compouents/empty_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:wallpaper_app/Compouents/image_urls.dart';
+import 'package:wallpaper_app/Compouents/endless_scroll.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
@@ -13,7 +14,6 @@ import 'package:wallpaper_app/Compouents/constants.dart';
 import 'package:wallpaper_app/Compouents/widgets.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/cubit.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
-import 'package:wallpaper_app/models/curated_photos.dart';
 import '../../Compouents/adaptive_indicator.dart';
 import '../../models/CustomBannerAd.dart';
 import '../../models/CustomInterstitialAd.dart';
@@ -45,40 +45,37 @@ class ItemSelectScreen extends StatelessWidget {
             body: Column(
               children: [
                 Expanded(
-                  child: Scrollbar(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          SizedBox(height: 10,),
-                          ConditionalBuilder(
-                            condition:cubit.curatedSearchSelectPhotos!=null,
-                            builder: (context) =>builderWidget(cubit.curatedSearchSelectPhotos,context,state),
-                            fallback: (context) => const Center(
-                              child:  AdaptiveIndicator(),
-                            ),
-                          ),
-                          if(state is WallpaperGetDataError)
-                            Center(
-                              child: EmptyWidget(
-                                hideBackgroundAnimation: true,
-                                image: null,
-                                packageImage: PackageImage.Image_1,
-                                title: "Something Wrong Please Check Your Network :(",
-                                titleTextStyle: const TextStyle(
-                                  fontSize: 22,
-                                  color: Color(0xff9da9c7),
-                                  fontWeight: FontWeight.w500,
+                  child: PagedGrid(
+                    cursor: cubit.selectPhotoCursor,
+                    onLoadMore: () =>
+                        cubit.searchSelectImages(titleCategory, more: true),
+                    onRefresh: () => cubit.searchSelectImages(titleCategory),
+                    itemCount:
+                        cubit.curatedSearchSelectPhotos?.photos.length ?? 0,
+                    itemBuilder: (context, index) => buildGridProduct(
+                        cubit.curatedSearchSelectPhotos!.photos[index], context),
+                    placeholder: cubit.curatedSearchSelectPhotos != null
+                        ? null
+                        : state is WallpaperGetDataError
+                            ? Center(
+                                child: EmptyWidget(
+                                  hideBackgroundAnimation: true,
+                                  image: null,
+                                  packageImage: PackageImage.Image_1,
+                                  title:
+                                      "Something Wrong Please Check Your Network :(",
+                                  titleTextStyle: const TextStyle(
+                                    fontSize: 22,
+                                    color: Color(0xff9da9c7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  subtitleTextStyle: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xffabb8d6),
+                                  ),
                                 ),
-                                subtitleTextStyle: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xffabb8d6),
-                                ),
-                              ),
-                            ),
-
-                        ],
-                      ),
-                    ),
+                              )
+                            : const Center(child: AdaptiveIndicator()),
                   ),
                 ),
                 SizedBox(height: 20,),
@@ -91,27 +88,6 @@ class ItemSelectScreen extends StatelessWidget {
       });
   }
 
-  Widget builderWidget(CuratedPhotos? model,context,state) =>
-      SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-                padding: EdgeInsets.all(5),
-                primary: true,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 10.0,
-                crossAxisSpacing: 15.0,
-                childAspectRatio: 1 / 1.50,
-                children:
-                List.generate(model!.photos.length,(index)=>buildGridProduct(model.photos[index],context))),
-            const SizedBox(height: 20,)
-          ],
-        ),
-      );
   Widget buildGridProduct(model,context) =>
       Container(decoration: BoxDecoration(border:Border.all(color: Theme.of(context).primaryColor) ),
         child: InkWell(
@@ -131,7 +107,18 @@ class ItemSelectScreen extends StatelessWidget {
                         child: Container(color: Colors.transparent,
                           child: Column(
                             children: <Widget>[
-                              Image.network(model.src.portrait),
+                              CachedNetworkImage(
+                                imageUrl: model.src.portrait,
+                                ///the grid already cached a small copy, so the
+                                ///preview opens instantly and then sharpens
+                                placeholder: (context, url) => CachedNetworkImage(
+                                  imageUrl: thumbUrl(model.src.portrait),
+                                  errorWidget: (context, url, error) =>
+                                      const ImagePlaceholder(),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
+                              ),
                             ],
                           ),
                         ),
@@ -161,8 +148,9 @@ class ItemSelectScreen extends StatelessWidget {
               Stack(alignment: Alignment.bottomCenter,
                   children: [
                     CachedNetworkImage(width: double.infinity,fit: BoxFit.fill,
-                      imageUrl:model.src.portrait,
-                      placeholder: (context, url) => CircularProgressIndicator(),
+                      imageUrl:thumbUrl(model.src.portrait), memCacheWidth: 600,
+                      placeholder: (context, url) => ImagePlaceholder(color: model.avgColor),
+                      fadeInDuration: const Duration(milliseconds: 250),
                       errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                     Container(color: Colors.transparent,

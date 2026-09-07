@@ -1,9 +1,11 @@
+import 'package:wallpaper_app/models/curated_videos.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:wallpaper_app/Compouents/empty_widget.dart';
 import 'package:wallpaper_app/compat/fijk_compat.dart';
 import 'package:flutter/material.dart';
+import 'package:wallpaper_app/Compouents/image_urls.dart';
+import 'package:wallpaper_app/Compouents/endless_scroll.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:wallpaper_app/compat/share_compat.dart';
@@ -15,7 +17,6 @@ import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
 import '../../Compouents/adaptive_indicator.dart';
 import '../../models/CustomBannerAd.dart';
 import '../../models/CustomInterstitialAd.dart';
-import '../../models/curated_videos.dart';
 
 
 class ItemSelectVideosScreen extends StatefulWidget {
@@ -48,40 +49,44 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
             body: Column(
               children: [
                 Expanded(
-                  child: Scrollbar(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          SizedBox(height: 10,),
-                          ConditionalBuilder(
-                            condition:cubit.curatedSearchSelectVideos!=null,
-                            builder: (context) =>builderWidget2(cubit.curatedSearchSelectVideos,context,state),
-                            fallback: (context) => const Center(
-                              child:  AdaptiveIndicator(),
-                            ),
-                          ),
-                          if(state is WallpaperGetDataError)
-                            Center(
-                              child: EmptyWidget(
-                                hideBackgroundAnimation: true,
-                                image: null,
-                                packageImage: PackageImage.Image_1,
-                                title: "Something Wrong Please Check Your Network :(",
-                                titleTextStyle: const TextStyle(
-                                  fontSize: 22,
-                                  color: Color(0xff9da9c7),
-                                  fontWeight: FontWeight.w500,
+                  child: PagedGrid(
+                    cursor: cubit.selectVideoCursor,
+                    onLoadMore: () =>
+                        cubit.searchSelectVideos(titleCategory, more: true),
+                    onRefresh: () => cubit.searchSelectVideos(titleCategory),
+                    itemCount: cubit.curatedSearchSelectVideos?.videos
+                            .where((v) => v.videoFiles.isNotEmpty)
+                            .length ??
+                        0,
+                    itemBuilder: (context, index) {
+                      final video = cubit.curatedSearchSelectVideos!.videos
+                          .where((v) => v.videoFiles.isNotEmpty)
+                          .elementAt(index);
+                      return buildGridProduct2(
+                          video, video.videoFiles.bestForPhone, context);
+                    },
+                    placeholder: cubit.curatedSearchSelectVideos != null
+                        ? null
+                        : state is WallpaperGetDataError
+                            ? Center(
+                                child: EmptyWidget(
+                                  hideBackgroundAnimation: true,
+                                  image: null,
+                                  packageImage: PackageImage.Image_1,
+                                  title:
+                                      "Something Wrong Please Check Your Network :(",
+                                  titleTextStyle: const TextStyle(
+                                    fontSize: 22,
+                                    color: Color(0xff9da9c7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  subtitleTextStyle: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xffabb8d6),
+                                  ),
                                 ),
-                                subtitleTextStyle: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xffabb8d6),
-                                ),
-                              ),
-                            ),
-
-                        ],
-                      ),
-                    ),
+                              )
+                            : const Center(child: AdaptiveIndicator()),
                   ),
                 ),
                 SizedBox(height: 20,),
@@ -108,11 +113,11 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
               context: context,
               dialogType: DialogType.noHeader,
               body: Container(
-                height: MediaQuery.of(context).size.height * 0.7,
                 width: double.infinity,
                 child:Stack(
                   children: [
-                    AnimatedOpacity(
+                    Positioned.fill(
+                      child: AnimatedOpacity(
                       opacity: 0.75,
                       duration: Duration(seconds: 1),
                       child: Container(
@@ -121,10 +126,12 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
                         child: CachedNetworkImage(
                           fit: BoxFit.cover,
                           imageUrl: model.image,
-                          placeholder: (context, url) => CircularProgressIndicator(),
+                          placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                           errorWidget: (context, url, error) => Icon(Icons.error),
                         ),
                       ),
+                    ),
                     ),
                     FijkView(color: Colors.transparent,
                       player: player,
@@ -143,7 +150,7 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
               headerAnimationLoop: false,
               title: saveImageDone,
               onDismissCallback: (type) {
-                player.pause(); // Pause the video when the dialog is dismissed
+                player.dispose(); // free the decoder when the dialog is dismissed
               },
             )..show();
 
@@ -159,8 +166,9 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
                       height: MediaQuery.of(context).size.height,
                       child: CachedNetworkImage(
                         fit: BoxFit.cover,
-                        imageUrl: model.image,
-                        placeholder: (context, url) => CircularProgressIndicator(),
+                        imageUrl: thumbUrl(model.image), memCacheWidth: 600,
+                        placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                         errorWidget: (context, url, error) => Icon(Icons.error),
                       ),
                     ),
@@ -275,35 +283,4 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
         ),
       );
 
-  Widget builderWidget2(VideoModel? model, context, state) => SingleChildScrollView(
-    physics: const BouncingScrollPhysics(),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GridView.count(
-          padding: EdgeInsets.all(5),
-          primary: true,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: 10.0,
-          crossAxisSpacing: 15.0,
-          childAspectRatio: 1 / 1.50,
-          children:  List.generate(
-            model?.videos.length ?? 0,
-                (videoIndex) => Stack(
-              children: List.generate(
-                model?.videos[videoIndex].videoFiles.length ?? 0,
-                    (fileIndex) => buildGridProduct2(
-                    model?.videos[videoIndex],
-                    model?.videos[videoIndex].videoFiles[fileIndex],
-                    context
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
 }

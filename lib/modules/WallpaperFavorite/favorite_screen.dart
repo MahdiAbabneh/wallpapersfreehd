@@ -1,9 +1,10 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:wallpaper_app/Compouents/empty_widget.dart';
 import 'package:wallpaper_app/compat/fijk_compat.dart';
 import 'package:flutter/material.dart';
+import 'package:wallpaper_app/Compouents/endless_scroll.dart';
+import 'package:wallpaper_app/Compouents/image_urls.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
@@ -71,77 +72,58 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               padding: const EdgeInsets.only(top: 10.0),
               child: TabBarView(
                 children: [
-                  Scrollbar(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          if(cubit.favoriteImage.isNotEmpty)
-                            ConditionalBuilder(
-                              condition:cubit.favoriteImage.isNotEmpty,
-                              builder: (context) =>builderWidget(cubit.favoriteImage,context,state),
-                              fallback: (context) => const Center(
-                                child: LinearProgressIndicator(minHeight: 5),
-                              ),
-                            ),
-                          if(cubit.favoriteImage.isEmpty)
-                            Center(
-                              child: EmptyWidget(
-                                hideBackgroundAnimation: true,
-                                image: null,
-                                packageImage: PackageImage.Image_4,
-                                title: noFavorite,
-                                subTitle: imagesToFavorite,
-                                titleTextStyle: const TextStyle(
-                                  fontSize: 22,
-                                  color: Color(0xff9da9c7),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                subtitleTextStyle: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xffabb8d6),
-                                ),
-                              ),
-                            ),
-                        ],
+                  PagedGrid(
+                    itemCount: cubit.favoriteImage.length,
+                    itemBuilder: (context, index) =>
+                        buildGridProduct(cubit.favoriteImage[index], context),
+                    placeholder: cubit.favoriteImage.isNotEmpty
+                        ? null
+                        : Center(
+                      child: EmptyWidget(
+                        hideBackgroundAnimation: true,
+                        image: null,
+                        packageImage: PackageImage.Image_4,
+                        title: noFavorite,
+                        subTitle: imagesToFavorite,
+                        titleTextStyle: const TextStyle(
+                          fontSize: 22,
+                          color: Color(0xff9da9c7),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        subtitleTextStyle: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xffabb8d6),
+                        ),
                       ),
                     ),
                   ),
-                  Scrollbar(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          if(cubit.favoriteVideo.isNotEmpty)
-                            ConditionalBuilder(
-                              condition:cubit.favoriteVideo.isNotEmpty,
-                              builder: (context) =>builderWidget2(cubit.favoriteVideo,context,state),
-                              fallback: (context) => const Center(
-                                child: LinearProgressIndicator(minHeight: 5),
-                              ),
-                            ),
-                          if(cubit.favoriteVideo.isEmpty)
-                            Center(
-                              child: EmptyWidget(
-                                hideBackgroundAnimation: true,
-                                image: null,
-                                packageImage: PackageImage.Image_4,
-                                title: noFavorite,
-                                subTitle: imagesToFavorite,
-                                titleTextStyle: const TextStyle(
-                                  fontSize: 22,
-                                  color: Color(0xff9da9c7),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                subtitleTextStyle: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xffabb8d6),
-                                ),
-                              ),
-                            ),
-                        ],
+                  PagedGrid(
+                    itemCount: cubit.favoriteVideo.length,
+                    itemBuilder: (context, index) => buildGridProduct2(
+                        cubit.favoriteVideo[index],
+                        cubit.favoriteVideoImage[index],
+                        context),
+                    placeholder: cubit.favoriteVideo.isNotEmpty
+                        ? null
+                        : Center(
+                      child: EmptyWidget(
+                        hideBackgroundAnimation: true,
+                        image: null,
+                        packageImage: PackageImage.Image_4,
+                        title: noFavorite,
+                        subTitle: imagesToFavorite,
+                        titleTextStyle: const TextStyle(
+                          fontSize: 22,
+                          color: Color(0xff9da9c7),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        subtitleTextStyle: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xffabb8d6),
+                        ),
                       ),
                     ),
                   ),
-
                 ],
               ),
             ),),
@@ -149,27 +131,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       },
     );
   }
-
-  Widget builderWidget(List favoriteImage,context,state) =>
-      SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-                padding: const EdgeInsets.all(10),
-                primary: true,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 10.0,
-                crossAxisSpacing: 15.0,
-                childAspectRatio: 1 / 1.50,
-                children:
-                List.generate(favoriteImage.length,(index)=>buildGridProduct(favoriteImage[index],context))),
-          ],
-        ),
-      );
 
   Widget buildGridProduct(image,context) =>
       Container(decoration: BoxDecoration(border:Border.all(color: Theme.of(context).primaryColor) ),
@@ -192,7 +153,18 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                 child: Container(color: Colors.transparent,
                                   child: Column(
                                     children: <Widget>[
-                                      Image.network(image),
+                                      CachedNetworkImage(
+                                imageUrl: image,
+                                ///the grid already cached a small copy, so the
+                                ///preview opens instantly and then sharpens
+                                placeholder: (context, url) => CachedNetworkImage(
+                                  imageUrl: thumbUrl(image),
+                                  errorWidget: (context, url, error) =>
+                                      const ImagePlaceholder(),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
+                              ),
                                     ],
                                   ),
                                 ),
@@ -232,8 +204,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               Stack(alignment: Alignment.bottomCenter,
                   children: [
                     CachedNetworkImage(width: double.infinity,fit: BoxFit.fill,
-                      imageUrl: image,
-                      placeholder: (context, url) => CircularProgressIndicator(),
+                      imageUrl: thumbUrl(image), memCacheWidth: 600,
+                      placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                       errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                     Container(color: Colors.transparent,
@@ -282,39 +255,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
         ),
       );
 
-  Widget builderWidget2(List favoriteVideo,context,state) =>
-      SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-                padding: const EdgeInsets.all(10),
-                primary: true,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 10.0,
-                crossAxisSpacing: 15.0,
-                childAspectRatio: 1 / 1.50,
-                children:List.generate(
-                  favoriteVideo.length,
-                      (videoIndex) => Stack(
-                    children: List.generate(
-                      HomeCubit.get(context).favoriteVideoImage.length,
-                          (fileIndex) => buildGridProduct2(
-                              favoriteVideo[videoIndex],
-                              HomeCubit.get(context).favoriteVideoImage[videoIndex],
-                          context
-                      ),
-                    ),
-                  ),
-                ),
-            )
-          ],
-        ),
-      );
-
   Widget buildGridProduct2(video,image,context) =>
       Container(decoration: BoxDecoration(border:Border.all(color: Theme.of(context).primaryColor) ),
         child: InkWell(
@@ -329,11 +269,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               context: context,
               dialogType: DialogType.noHeader,
               body: Container(
-                  height: MediaQuery.of(context).size.height * 0.7,
                   width: double.infinity,
                   child:Stack(
                     children: [
-                      AnimatedOpacity(
+                      Positioned.fill(
+                        child: AnimatedOpacity(
                         opacity: 0.75,
                         duration: Duration(seconds: 1),
                         child: Container(
@@ -342,10 +282,12 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                           child: CachedNetworkImage(
                             fit: BoxFit.cover,
                             imageUrl: image,
-                            placeholder: (context, url) => CircularProgressIndicator(),
+                            placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                             errorWidget: (context, url, error) => Icon(Icons.error),
                           ),
                         ),
+                      ),
                       ),
                       FijkView(color: Colors.transparent,
                         player: player,
@@ -370,7 +312,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               headerAnimationLoop: false,
               title: saveImageDone,
               onDismissCallback: (type) {
-                player.pause(); // Pause the video when the dialog is dismissed
+                player.dispose(); // free the decoder when the dialog is dismissed
               },
             )..show();
 
@@ -386,8 +328,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                       height: MediaQuery.of(context).size.height,
                       child: CachedNetworkImage(
                         fit: BoxFit.cover,
-                        imageUrl: image,
-                        placeholder: (context, url) => CircularProgressIndicator(),
+                        imageUrl: thumbUrl(image), memCacheWidth: 600,
+                        placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                         errorWidget: (context, url, error) => Icon(Icons.error),
                       ),
                     ),

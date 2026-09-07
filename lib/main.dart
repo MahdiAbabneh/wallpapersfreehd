@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:wallpaper_app/Layout/Home/home_layout.dart';
-import 'Compouents/constant_empty.dart';
 import 'Layout/Home/cubit/cubit.dart';
 import 'Layout/Home/cubit/states.dart';
 import 'bloc_observer.dart';
@@ -15,7 +14,6 @@ void main() async{
   MobileAds.instance.initialize();
   Bloc.observer = AppBlocObserver();
   await CacheHelper.init();
-  pageNumber= CacheHelper.getData(key:'pageNumber')??1;
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
       .then((_) {

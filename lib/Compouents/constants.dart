@@ -18,9 +18,7 @@ const String noFavorite="No Favorite Found";
 
 const String imagesToFavorite="Favorites show here";
 
-const String moreRandomImage="Other Photos ...";
 
-const String moreRandomImage2="Other Videos ...";
 
 
 const String searchText="Search";

@@ -1,10 +1,12 @@
+import 'package:wallpaper_app/models/curated_videos.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:custom_radio_grouped_button/custom_radio_grouped_button.dart';
 import 'package:wallpaper_app/Compouents/empty_widget.dart';
 import 'package:wallpaper_app/compat/fijk_compat.dart';
 import 'package:flutter/material.dart';
+import 'package:wallpaper_app/Compouents/image_urls.dart';
+import 'package:wallpaper_app/Compouents/endless_scroll.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:photo_view/photo_view.dart';
@@ -16,9 +18,6 @@ import 'package:wallpaper_app/Compouents/widgets.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/cubit.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
 import 'package:wallpaper_app/models/CustomInterstitialAd.dart';
-import 'package:wallpaper_app/models/curated_photos.dart';
-import 'package:wallpaper_app/models/curated_videos.dart';
-import 'package:wallpaper_app/network/cache_helper.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -83,39 +82,34 @@ class _HomeScreenState extends State<HomeScreen> {
                Column(
                  children: [
                    Expanded(
-                     child: Scrollbar(
-                       child: SingleChildScrollView(
-                         child: Column(
-                           children: [
-                             SizedBox(height: 10,),
-                             ConditionalBuilder(
-                               condition:cubit.curatedPhotos!=null,
-                               builder: (context) =>builderWidget(cubit.curatedPhotos,context,state),
-                               fallback: (context) => const Center(
-                                 child:  AdaptiveIndicator(),
-                               ),
-                             ),
-                             if(state is WallpaperGetDataError)
-                               Center(
-                                 child: EmptyWidget(
-                                   hideBackgroundAnimation: true,
-                                   image: null,
-                                   packageImage: PackageImage.Image_1,
-                                   title: "Something Wrong Please Check Your Network :(",
-                                   titleTextStyle: const TextStyle(
-                                     fontSize: 22,
-                                     color: Color(0xff9da9c7),
-                                     fontWeight: FontWeight.w500,
-                                   ),
-                                   subtitleTextStyle: const TextStyle(
-                                     fontSize: 14,
-                                     color: Color(0xffabb8d6),
-                                   ),
-                                 ),
-                               ),
-                           ],
+                     child: PagedGrid(
+                       cursor: cubit.homePhotoCursor,
+                       onLoadMore: () => cubit.getHomeData(more: true),
+                       onRefresh: () => cubit.getHomeData(),
+                       itemCount: cubit.curatedPhotos?.photos.length ?? 0,
+                       itemBuilder: (context, index) => buildGridProduct(
+                           cubit.curatedPhotos!.photos[index], context),
+                       placeholder: cubit.curatedPhotos != null
+                           ? null
+                           : state is WallpaperGetDataError
+                               ? Center(
+                       child: EmptyWidget(
+                         hideBackgroundAnimation: true,
+                         image: null,
+                         packageImage: PackageImage.Image_1,
+                         title: "Something Wrong Please Check Your Network :(",
+                         titleTextStyle: const TextStyle(
+                           fontSize: 22,
+                           color: Color(0xff9da9c7),
+                           fontWeight: FontWeight.w500,
+                         ),
+                         subtitleTextStyle: const TextStyle(
+                           fontSize: 14,
+                           color: Color(0xffabb8d6),
                          ),
                        ),
+                     )
+                               : const Center(child: AdaptiveIndicator()),
                      ),
                    ),
                  ],
@@ -123,39 +117,42 @@ class _HomeScreenState extends State<HomeScreen> {
                Column(
                  children: [
                    Expanded(
-                     child: Scrollbar(
-                       child: SingleChildScrollView(
-                         child: Column(
-                           children: [
-                             SizedBox(height: 10,),
-                             ConditionalBuilder(
-                               condition:cubit.curatedVideo!=null,
-                               builder: (context) =>builderWidget2(cubit.curatedVideo,context,state),
-                               fallback: (context) => const Center(
-                                 child:  AdaptiveIndicator(),
-                               ),
-                             ),
-                             if(state is WallpaperGetDataError)
-                               Center(
-                                 child: EmptyWidget(
-                                   hideBackgroundAnimation: true,
-                                   image: null,
-                                   packageImage: PackageImage.Image_1,
-                                   title: "Something Wrong Please Check Your Network :(",
-                                   titleTextStyle: const TextStyle(
-                                     fontSize: 22,
-                                     color: Color(0xff9da9c7),
-                                     fontWeight: FontWeight.w500,
-                                   ),
-                                   subtitleTextStyle: const TextStyle(
-                                     fontSize: 14,
-                                     color: Color(0xffabb8d6),
-                                   ),
-                                 ),
-                               ),
-                           ],
+                     child: PagedGrid(
+                       cursor: cubit.homeVideoCursor,
+                       onLoadMore: () => cubit.getHomeData2(more: true),
+                       onRefresh: () => cubit.getHomeData2(),
+                       itemCount: cubit.curatedVideo?.videos
+                               .where((v) => v.videoFiles.isNotEmpty)
+                               .length ??
+                           0,
+                       itemBuilder: (context, index) {
+                         final video = cubit.curatedVideo!.videos
+                             .where((v) => v.videoFiles.isNotEmpty)
+                             .elementAt(index);
+                         return buildGridProduct2(
+                             video, video.videoFiles.bestForPhone, context);
+                       },
+                       placeholder: cubit.curatedVideo != null
+                           ? null
+                           : state is WallpaperGetDataError
+                               ? Center(
+                       child: EmptyWidget(
+                         hideBackgroundAnimation: true,
+                         image: null,
+                         packageImage: PackageImage.Image_1,
+                         title: "Something Wrong Please Check Your Network :(",
+                         titleTextStyle: const TextStyle(
+                           fontSize: 22,
+                           color: Color(0xff9da9c7),
+                           fontWeight: FontWeight.w500,
+                         ),
+                         subtitleTextStyle: const TextStyle(
+                           fontSize: 14,
+                           color: Color(0xffabb8d6),
                          ),
                        ),
+                     )
+                               : const Center(child: AdaptiveIndicator()),
                      ),
                    ),
                  ],
@@ -169,49 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget builderWidget(CuratedPhotos? model,context,state) =>
-      SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-              padding: EdgeInsets.all(5),
-                primary: true,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 10.0,
-                crossAxisSpacing: 15.0,
-                childAspectRatio: 1 / 1.50,
-                children:
-                List.generate(model!.photos.length,(index)=>buildGridProduct(model.photos[index],context))),
-            SizedBox(height: 20,),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 10.0,right: 10),
-                child: SizedBox(width: double.infinity,
-                  child: ElevatedButton(onPressed: (){
-                    if(pageNumber==180)
-                      {
-                        pageNumber=1;
-                      }
-                    else{
-                      pageNumber=pageNumber!+1;
-                    }
-                    CacheHelper.sharedPreferences?.setInt("pageNumber",pageNumber!);
-                        HomeCubit.get(context)
-                            .getHomeData();
-                      }, child: const Text(moreRandomImage,style: TextStyle(color: Colors.white),)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20,)
-          ],
-        ),
-      );
-
-  Widget buildGridProduct(model,context) =>
+    Widget buildGridProduct(model,context) =>
       Container(decoration: BoxDecoration(border:Border.all(color: Theme.of(context).primaryColor) ),
         child: InkWell(
           onTap: (){
@@ -230,7 +185,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Container(color: Colors.transparent,
                           child: Column(
                             children: <Widget>[
-                              Image.network(model.src.portrait),
+                              CachedNetworkImage(
+                                imageUrl: model.src.portrait,
+                                ///the grid already cached a small copy, so the
+                                ///preview opens instantly and then sharpens
+                                placeholder: (context, url) => CachedNetworkImage(
+                                  imageUrl: thumbUrl(model.src.portrait),
+                                  errorWidget: (context, url, error) =>
+                                      const ImagePlaceholder(),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
+                              ),
                             ],
                           ),
                         ),
@@ -260,8 +226,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Stack(alignment: Alignment.bottomCenter,
                   children: [
                     CachedNetworkImage(width: double.infinity,fit: BoxFit.fill,
-                      imageUrl:model.src.portrait,
-                      placeholder: (context, url) => CircularProgressIndicator(),
+                      imageUrl:thumbUrl(model.src.portrait), memCacheWidth: 600,
+                      placeholder: (context, url) => ImagePlaceholder(color: model.avgColor),
+                      fadeInDuration: const Duration(milliseconds: 250),
                       errorWidget: (context, url, error) => Icon(Icons.error),
 
                     ),
@@ -445,11 +412,11 @@ class _HomeScreenState extends State<HomeScreen> {
               context: context,
               dialogType: DialogType.noHeader,
               body: Container(
-                height: MediaQuery.of(context).size.height * 0.7,
                 width: double.infinity,
                 child:Stack(
                   children: [
-                    AnimatedOpacity(
+                    Positioned.fill(
+                      child: AnimatedOpacity(
                       opacity: 0.75,
                       duration: Duration(seconds: 1),
                       child: Container(
@@ -458,10 +425,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: CachedNetworkImage(
                           fit: BoxFit.cover,
                           imageUrl: model.image,
-                          placeholder: (context, url) => CircularProgressIndicator(),
+                          placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                           errorWidget: (context, url, error) => Icon(Icons.error),
                         ),
                       ),
+                    ),
                     ),
                     FijkView(color: Colors.transparent,
                       player: player,
@@ -480,7 +449,7 @@ class _HomeScreenState extends State<HomeScreen> {
               headerAnimationLoop: false,
               title: saveImageDone,
               onDismissCallback: (type) {
-                player.pause(); // Pause the video when the dialog is dismissed
+                player.dispose(); // free the decoder when the dialog is dismissed
               },
             )..show();
 
@@ -496,8 +465,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: MediaQuery.of(context).size.height,
                       child: CachedNetworkImage(
                         fit: BoxFit.cover,
-                        imageUrl: model.image,
-                        placeholder: (context, url) => CircularProgressIndicator(),
+                        imageUrl: thumbUrl(model.image), memCacheWidth: 600,
+                        placeholder: (context, url) => const ImagePlaceholder(),
+                      fadeInDuration: const Duration(milliseconds: 250),
                         errorWidget: (context, url, error) => Icon(Icons.error),
                       ),
                     ),
@@ -624,60 +594,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
 
-  Widget builderWidget2(VideoModel? model, context, state) => SingleChildScrollView(
-    physics: const BouncingScrollPhysics(),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GridView.count(
-          padding: EdgeInsets.all(5),
-          primary: true,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: 10.0,
-          crossAxisSpacing: 15.0,
-          childAspectRatio: 1 / 1.50,
-          children:  List.generate(
-            model?.videos.length ?? 0,
-                (videoIndex) => Stack(
-              children: List.generate(
-                model?.videos[videoIndex].videoFiles.length ?? 0,
-                    (fileIndex) => buildGridProduct2(
-                    model?.videos[videoIndex],
-                    model?.videos[videoIndex].videoFiles[fileIndex],
-                    context
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 20,),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 10.0, right: 10),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (pageNumber == 180) {
-                    pageNumber = 1;
-                  } else {
-                    pageNumber = pageNumber! + 1;
-                  }
-                  CacheHelper.sharedPreferences?.setInt("pageNumber", pageNumber!);
-                  HomeCubit.get(context).getHomeData2();
+  
 
-                },
-                child: const Text(moreRandomImage2, style: TextStyle(color: Colors.white)),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20,)
-      ],
-    ),
-  );
+
 }
-
-

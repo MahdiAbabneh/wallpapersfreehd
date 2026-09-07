@@ -10,6 +10,8 @@ class WallpaperGetDataSuccess extends HomeStates {}
 
 class WallpaperGetDataError extends HomeStates {}
 
+class WallpaperLoadMoreLoading extends HomeStates {}
+
 class WallpaperImageInGalleryLoading extends HomeStates {}
 
 class WallpaperImageInGallerySuccess extends HomeStates {}

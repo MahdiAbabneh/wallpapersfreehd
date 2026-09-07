@@ -11,10 +11,12 @@ import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
 import 'package:wallpaper_app/models/curated_photos.dart';
 import 'package:wallpaper_app/models/curated_videos.dart';
+import 'package:wallpaper_app/models/page_cursor.dart';
 import 'package:wallpaper_app/modules/WallpaperCategory/category_screen.dart';
 import 'package:wallpaper_app/modules/WallpaperFavorite/favorite_screen.dart';
 import 'package:wallpaper_app/modules/WallpaperHome/home_screen.dart';
 import 'package:wallpaper_app/modules/WallpaperSearch/search_screen.dart';
+import 'package:wallpaper_app/network/cache_helper.dart';
 import 'package:wallpaper_app/network/dio_helper.dart';
 
 
@@ -54,37 +56,106 @@ class HomeCubit extends Cubit<HomeStates> {
   CuratedPhotos? curatedPhotos;
   VideoModel? curatedVideo;
 
-  ///show image in Home Screen
-  Future<void> getHomeData() async{
-    curatedPhotos=null;
-    emit(WallpaperGetDataLoading());
-  await  DioHelper.getData(
-      url: 'https://api.pexels.com/v1/curated/?page=$pageNumber&per_page=40',
-    ).then((value) {
-      curatedPhotos=CuratedPhotos.fromJson(value.data);
-      emit(WallpaperGetDataSuccess());
-    }).catchError((error) {
-      emit(WallpaperGetDataError());
-    });
-  }
-
   ///Pexels serves only 12 pages of popular videos, any page past that
   ///comes back with an empty list, unlike curated photos which go past 180
   static const int maxVideoPage = 12;
-  int videoPage(int? page) => (((page ?? 1) - 1) % maxVideoPage) + 1;
+  ///every search endpoint stops after 480 results, that is 6 pages of 80
+  static const int maxSearchPage = 6;
+  static const int maxCuratedPage = 180;
 
-  Future<void> getHomeData2() async{
-    curatedVideo=null;
-    emit(WallpaperGetDataLoading());
-    await  DioHelper.getData(
-      url: 'https://api.pexels.com/videos/popular/?page=${videoPage(pageNumber)}&per_page=40',
-    ).then((value) {
-      curatedVideo=VideoModel.fromJson(value.data);
+  final Random _random = Random();
+
+  ///a different starting page on every launch, so reopening the app does not
+  ///greet the user with the wallpapers they already scrolled past
+  int freshStartPage(int maxPage, String key) {
+    final int? last = CacheHelper.getData(key: key) as int?;
+    int page = 1 + _random.nextInt(maxPage);
+    if (page == last && maxPage > 1) {
+      page = page >= maxPage ? 1 : page + 1;
+    }
+    CacheHelper.saveData(key: key, value: page);
+    return page;
+  }
+
+  final PageCursor homePhotoCursor =
+      PageCursor(maxPage: maxCuratedPage, perPage: 40);
+
+  ///show image in Home Screen
+  Future<void> getHomeData({bool more = false}) async{
+    if (more) {
+      if (homePhotoCursor.loading || homePhotoCursor.ended || curatedPhotos == null) return;
+      homePhotoCursor.loading = true;
+      emit(WallpaperLoadMoreLoading());
+    } else {
+      curatedPhotos = null;
+      homePhotoCursor.reset(freshStartPage(maxCuratedPage, 'homePhotoPage'));
+      homePhotoCursor.loading = true;
+      emit(WallpaperGetDataLoading());
+    }
+    try {
+      final value = await DioHelper.getData(
+        url: 'https://api.pexels.com/v1/curated/?page=${homePhotoCursor.page}'
+            '&per_page=${homePhotoCursor.perPage}',
+      );
+      final CuratedPhotos data = CuratedPhotos.fromJson(value.data);
+      if (more) {
+        appendPhotos(curatedPhotos!, data.photos);
+      } else {
+        curatedPhotos = data;
+      }
+      if (data.photos.isEmpty || !homePhotoCursor.advance()) homePhotoCursor.ended = true;
+      homePhotoCursor.loading = false;
       emit(WallpaperGetDataSuccess());
-    }).catchError((error) {
-      print(error.toString());
-      emit(WallpaperGetDataError());
-    });
+    } catch (error) {
+      homePhotoCursor.loading = false;
+      ///a failed extra page must not wipe what the user is already looking at
+      emit(more ? WallpaperGetDataSuccess() : WallpaperGetDataError());
+    }
+  }
+
+  ///the feed is live, so the same photo can come back on a later page
+  void appendPhotos(CuratedPhotos target, List<Photos> extra) {
+    final seen = target.photos.map((e) => e.id).toSet();
+    target.photos.addAll(extra.where((e) => seen.add(e.id)));
+  }
+
+  void appendVideos(VideoModel target, List<Video> extra) {
+    final seen = target.videos.map((e) => e.id).toSet();
+    target.videos.addAll(extra.where((e) => seen.add(e.id)));
+  }
+
+  final PageCursor homeVideoCursor =
+      PageCursor(maxPage: maxVideoPage, perPage: 40);
+
+  Future<void> getHomeData2({bool more = false}) async{
+    if (more) {
+      if (homeVideoCursor.loading || homeVideoCursor.ended || curatedVideo == null) return;
+      homeVideoCursor.loading = true;
+      emit(WallpaperLoadMoreLoading());
+    } else {
+      curatedVideo = null;
+      homeVideoCursor.reset(freshStartPage(maxVideoPage, 'homeVideoPage'));
+      homeVideoCursor.loading = true;
+      emit(WallpaperGetDataLoading());
+    }
+    try {
+      final value = await DioHelper.getData(
+        url: 'https://api.pexels.com/videos/popular/?page=${homeVideoCursor.page}'
+            '&per_page=${homeVideoCursor.perPage}',
+      );
+      final VideoModel data = VideoModel.fromJson(value.data);
+      if (more) {
+        appendVideos(curatedVideo!, data.videos);
+      } else {
+        curatedVideo = data;
+      }
+      if (data.videos.isEmpty || !homeVideoCursor.advance()) homeVideoCursor.ended = true;
+      homeVideoCursor.loading = false;
+      emit(WallpaperGetDataSuccess());
+    } catch (error) {
+      homeVideoCursor.loading = false;
+      emit(more ? WallpaperGetDataSuccess() : WallpaperGetDataError());
+    }
   }
 
   ///Save image in gallery
@@ -123,61 +194,171 @@ class HomeCubit extends Cubit<HomeStates> {
 
 
   CuratedPhotos? curatedSearchPhotos;
-  ///Search Images
-  Future<void>  searchImages(String? text)async {
-    curatedSearchPhotos=null;
-    emit(WallpaperSearchImageLoading());
-    await  DioHelper.getData(
-      url: 'https://api.pexels.com/v1/search?query=$text&per_page=80',
-    ).then((value) {
-      curatedSearchPhotos=CuratedPhotos.fromJson(value.data);
+  final PageCursor searchPhotoCursor =
+      PageCursor(maxPage: maxSearchPage, perPage: 80);
+  String _searchPhotoQuery = "";
+
+  ///Search Images: starts at the best matches, then appends while scrolling
+  Future<void>  searchImages(String? text, {bool more = false})async {
+    if (more) {
+      if (searchPhotoCursor.loading || searchPhotoCursor.ended || curatedSearchPhotos == null) return;
+      searchPhotoCursor.loading = true;
+      emit(WallpaperLoadMoreLoading());
+    } else {
+      curatedSearchPhotos = null;
+      _searchPhotoQuery = text ?? "";
+      searchPhotoCursor.reset(1);
+      searchPhotoCursor.loading = true;
+      emit(WallpaperSearchImageLoading());
+    }
+    try {
+      final value = await DioHelper.getData(
+        url: 'https://api.pexels.com/v1/search?query=$_searchPhotoQuery'
+            '&page=${searchPhotoCursor.page}&per_page=${searchPhotoCursor.perPage}',
+      );
+      final CuratedPhotos data = CuratedPhotos.fromJson(value.data);
+      if (more) {
+        appendPhotos(curatedSearchPhotos!, data.photos);
+      } else {
+        curatedSearchPhotos = data;
+      }
+      if (data.photos.isEmpty || !searchPhotoCursor.advance()) searchPhotoCursor.ended = true;
+      searchPhotoCursor.loading = false;
       emit(WallpaperSearchImageSuccess());
-    }).catchError((error) {
-      emit(WallpaperSearchImageError());
-    });
+    } catch (error) {
+      searchPhotoCursor.loading = false;
+      emit(more ? WallpaperSearchImageSuccess() : WallpaperSearchImageError());
+    }
   }
 
   VideoModel? curatedSearchVideo;
 
-  Future<void>  searchVideo(String? text)async {
-    curatedSearchVideo=null;
-    emit(WallpaperSearchImageLoading());
-    await  DioHelper.getData(
-      url: 'https://api.pexels.com/videos/search?query=$text&per_page=80',
-    ).then((value) {
-      curatedSearchVideo=VideoModel.fromJson(value.data);
+  final PageCursor searchVideoCursor =
+      PageCursor(maxPage: maxSearchPage, perPage: 80);
+  String _searchVideoQuery = "";
+
+  Future<void>  searchVideo(String? text, {bool more = false})async {
+    if (more) {
+      if (searchVideoCursor.loading || searchVideoCursor.ended || curatedSearchVideo == null) return;
+      searchVideoCursor.loading = true;
+      emit(WallpaperLoadMoreLoading());
+    } else {
+      curatedSearchVideo = null;
+      _searchVideoQuery = text ?? "";
+      searchVideoCursor.reset(1);
+      searchVideoCursor.loading = true;
+      emit(WallpaperSearchImageLoading());
+    }
+    try {
+      final value = await DioHelper.getData(
+        url: 'https://api.pexels.com/videos/search?query=$_searchVideoQuery'
+            '&page=${searchVideoCursor.page}&per_page=${searchVideoCursor.perPage}',
+      );
+      final VideoModel data = VideoModel.fromJson(value.data);
+      if (more) {
+        appendVideos(curatedSearchVideo!, data.videos);
+      } else {
+        curatedSearchVideo = data;
+      }
+      if (data.videos.isEmpty || !searchVideoCursor.advance()) searchVideoCursor.ended = true;
+      searchVideoCursor.loading = false;
       emit(WallpaperSearchImageSuccessVideo());
-    }).catchError((error) {
-      emit(WallpaperSearchImageError());
-    });
+    } catch (error) {
+      searchVideoCursor.loading = false;
+      emit(more ? WallpaperSearchImageSuccessVideo() : WallpaperSearchImageError());
+    }
   }
 
   CuratedPhotos? curatedSearchSelectPhotos;
-  Future<void>  searchSelectImages(String? text)async {
-    curatedSearchSelectPhotos=null;
-    emit(WallpaperSearchSelectImageLoading());
-    await  DioHelper.getData(
-      url: 'https://api.pexels.com/v1/search?query=$text&per_page=80',
-    ).then((value) {
-      curatedSearchSelectPhotos=CuratedPhotos.fromJson(value.data);
+  final PageCursor selectPhotoCursor =
+      PageCursor(maxPage: maxSearchPage, perPage: 80);
+  String _selectPhotoQuery = "";
+
+  ///a category is browsed, not searched, so it opens on a random page
+  Future<void>  searchSelectImages(String? text, {bool more = false})async {
+    if (more) {
+      if (selectPhotoCursor.loading || selectPhotoCursor.ended || curatedSearchSelectPhotos == null) return;
+      selectPhotoCursor.loading = true;
+      emit(WallpaperLoadMoreLoading());
+    } else {
+      curatedSearchSelectPhotos = null;
+      _selectPhotoQuery = text ?? "";
+      selectPhotoCursor.reset(freshStartPage(maxSearchPage, 'selectPhotoPage'));
+      selectPhotoCursor.loading = true;
+      emit(WallpaperSearchSelectImageLoading());
+    }
+    try {
+      final value = await DioHelper.getData(
+        url: 'https://api.pexels.com/v1/search?query=$_selectPhotoQuery'
+            '&page=${selectPhotoCursor.page}&per_page=${selectPhotoCursor.perPage}',
+      );
+      CuratedPhotos data = CuratedPhotos.fromJson(value.data);
+      ///a narrow category can be shorter than the random page we picked
+      if (!more && data.photos.isEmpty && selectPhotoCursor.page != 1) {
+        selectPhotoCursor.reset(1);
+        final retry = await DioHelper.getData(
+          url: 'https://api.pexels.com/v1/search?query=$_selectPhotoQuery'
+              '&page=1&per_page=${selectPhotoCursor.perPage}',
+        );
+        data = CuratedPhotos.fromJson(retry.data);
+      }
+      if (more) {
+        appendPhotos(curatedSearchSelectPhotos!, data.photos);
+      } else {
+        curatedSearchSelectPhotos = data;
+      }
+      if (data.photos.isEmpty || !selectPhotoCursor.advance()) selectPhotoCursor.ended = true;
+      selectPhotoCursor.loading = false;
       emit(WallpaperSearchSelectImageSuccess());
-    }).catchError((error) {
-      emit(WallpaperSearchSelectImageError());
-    });
+    } catch (error) {
+      selectPhotoCursor.loading = false;
+      emit(more ? WallpaperSearchSelectImageSuccess() : WallpaperSearchSelectImageError());
+    }
   }
 
   VideoModel? curatedSearchSelectVideos;
-  Future<void>  searchSelectVideos(String? text)async {
-    curatedSearchSelectPhotos=null;
-    emit(WallpaperSearchSelectImageLoading());
-    await  DioHelper.getData(
-      url: 'https://api.pexels.com/videos/search?query=$text&per_page=80',
-    ).then((value) {
-      curatedSearchSelectVideos=VideoModel.fromJson(value.data);
+  final PageCursor selectVideoCursor =
+      PageCursor(maxPage: maxSearchPage, perPage: 80);
+  String _selectVideoQuery = "";
+
+  Future<void>  searchSelectVideos(String? text, {bool more = false})async {
+    if (more) {
+      if (selectVideoCursor.loading || selectVideoCursor.ended || curatedSearchSelectVideos == null) return;
+      selectVideoCursor.loading = true;
+      emit(WallpaperLoadMoreLoading());
+    } else {
+      curatedSearchSelectVideos = null;
+      _selectVideoQuery = text ?? "";
+      selectVideoCursor.reset(freshStartPage(maxSearchPage, 'selectVideoPage'));
+      selectVideoCursor.loading = true;
+      emit(WallpaperSearchSelectImageLoading());
+    }
+    try {
+      final value = await DioHelper.getData(
+        url: 'https://api.pexels.com/videos/search?query=$_selectVideoQuery'
+            '&page=${selectVideoCursor.page}&per_page=${selectVideoCursor.perPage}',
+      );
+      VideoModel data = VideoModel.fromJson(value.data);
+      if (!more && data.videos.isEmpty && selectVideoCursor.page != 1) {
+        selectVideoCursor.reset(1);
+        final retry = await DioHelper.getData(
+          url: 'https://api.pexels.com/videos/search?query=$_selectVideoQuery'
+              '&page=1&per_page=${selectVideoCursor.perPage}',
+        );
+        data = VideoModel.fromJson(retry.data);
+      }
+      if (more) {
+        appendVideos(curatedSearchSelectVideos!, data.videos);
+      } else {
+        curatedSearchSelectVideos = data;
+      }
+      if (data.videos.isEmpty || !selectVideoCursor.advance()) selectVideoCursor.ended = true;
+      selectVideoCursor.loading = false;
       emit(WallpaperSearchSelectImageSuccess());
-    }).catchError((error) {
-      emit(WallpaperSearchSelectImageError());
-    });
+    } catch (error) {
+      selectVideoCursor.loading = false;
+      emit(more ? WallpaperSearchSelectImageSuccess() : WallpaperSearchSelectImageError());
+    }
   }
 
   Database? dbImage;
