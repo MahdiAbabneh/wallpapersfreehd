@@ -38,14 +38,15 @@ class _CustomBannerAdState extends State<CustomBannerAd> {
 
   @override
   Widget build(BuildContext context) {
-    return isBannerAdLoaded
-        ? SizedBox(
+    ///the slot keeps its height while the ad loads so the screen does not jump
+    return SizedBox(
       width: double.infinity,
       height: 50,
-      child: AdWidget(
-        ad: bannerAd!,
-      ),
-    )
-        : const SizedBox();
+      child: isBannerAdLoaded
+          ? AdWidget(
+              ad: bannerAd!,
+            )
+          : null,
+    );
   }
 }

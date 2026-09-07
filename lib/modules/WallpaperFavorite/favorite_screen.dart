@@ -242,11 +242,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                           IconButton(onPressed: (){
                             HomeCubit.get(context).saveImageInGallery(image);
                             showToastSuccess(saveText, context);
-                          }, icon: const Icon(Icons.file_download_outlined,color: Colors.white,size: 30,)),
+                          }, tooltip: "Download", icon: const Icon(Icons.file_download_outlined,color: Colors.white,size: 30,)),
                           IconButton(onPressed: (){
                             HomeCubit.get(context).insertToDatabase(image,'',false);
                           },
-                              icon: Icon(
+                              tooltip: "Favorite", icon: Icon(
                                 HomeCubit.get(context)
                                     .favoriteImage
                                     .contains(image)
@@ -265,7 +265,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                 var file = await DefaultCacheManager().getSingleFile(image);
                                 await shareFiles([file.path],
                                   sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
-                              }, icon: const Icon(Icons.share,color: Colors.white,size: 30,));
+                              }, tooltip: "Share", icon: const Icon(Icons.share,color: Colors.white,size: 30,));
                             },
                           ),
 
@@ -406,12 +406,12 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
 
                         },
-                        icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
+                        tooltip: "Download", icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
                       ),
                       IconButton(onPressed: (){
                         HomeCubit.get(context).insertToDatabase(video,image,true);
                       },
-                          icon: Icon(
+                          tooltip: "Favorite", icon: Icon(
                             HomeCubit.get(context)
                                 .favoriteVideo
                                 .contains(video)
@@ -441,7 +441,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                 ).whenComplete(() =>
                                 AdInterstitialBottomSheet.showInterstitialAd());
                           },
-                          icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                          tooltip: "Share", icon: const Icon(Icons.share, color: Colors.white, size: 30),
                         );
                       },
 

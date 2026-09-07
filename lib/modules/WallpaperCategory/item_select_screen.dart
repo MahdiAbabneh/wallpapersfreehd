@@ -278,11 +278,11 @@ class ItemSelectScreen extends StatelessWidget {
                               onDismissCallback: (type) {},
                             ).show();
 
-                          }, icon: const Icon(Icons.file_download_outlined,color: Colors.white,size: 30,)),
+                          }, tooltip: "Download", icon: const Icon(Icons.file_download_outlined,color: Colors.white,size: 30,)),
                           IconButton(onPressed: (){
                             HomeCubit.get(context).insertToDatabase(model.src.portrait.toString(),'',false);
                           },
-                              icon: Icon(
+                              tooltip: "Favorite", icon: Icon(
                                 HomeCubit.get(context)
                                     .favoriteImage
                                     .contains(model.src.portrait)
@@ -300,7 +300,7 @@ class ItemSelectScreen extends StatelessWidget {
                                 final box = context.findRenderObject() as RenderBox?;
                                 var file = await DefaultCacheManager().getSingleFile(model.src.portrait);
                                 await shareFiles([file.path], sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,).whenComplete(() =>AdInterstitialBottomSheet.loadIntersitialAd()).whenComplete(() => AdInterstitialBottomSheet.showInterstitialAd());
-                              }, icon: const Icon(Icons.share,color: Colors.white,size: 30,));
+                              }, tooltip: "Share", icon: const Icon(Icons.share,color: Colors.white,size: 30,));
                             },
                           ),
 

@@ -225,12 +225,12 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
 
 
                         },
-                        icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
+                        tooltip: "Download", icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
                       ),
                       IconButton(onPressed: (){
                         HomeCubit.get(context).insertToDatabase(video.link.toString(),model.image,true);
                       },
-                          icon: Icon(
+                          tooltip: "Favorite", icon: Icon(
                             HomeCubit.get(context)
                                 .favoriteVideo
                                 .contains(video.link.toString())
@@ -260,7 +260,7 @@ class _ItemSelectVideosScreenState extends State<ItemSelectVideosScreen> {
                                 ).whenComplete(() =>
                                 AdInterstitialBottomSheet.showInterstitialAd());
                           },
-                          icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                          tooltip: "Share", icon: const Icon(Icons.share, color: Colors.white, size: 30),
                         );
                       },
 

@@ -406,7 +406,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                   AdInterstitialBottomSheet
                                                                       .showInterstitialAd());
                                                             },
-                                                            icon:
+                                                            tooltip: "Share", icon:
                                                             const Icon(
                                                               Icons.share,
                                                               color: Colors
@@ -739,7 +739,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                   AdInterstitialBottomSheet
                                                                       .showInterstitialAd());
                                                             },
-                                                            icon:
+                                                            tooltip: "Share", icon:
                                                             const Icon(
                                                               Icons.share,
                                                               color: Colors
@@ -814,8 +814,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                       BorderRadius.circular(10),
                                                       child: Stack(
                                                         children: [
-                                                          Image.asset(
-                                                              "assets/images/${categoryImages[index]}.jpg"),
+                                                          Positioned.fill(
+                                                            child: Image.asset(
+                                                              "assets/images/${categoryImages[index]}.jpg",
+                                                              fit: BoxFit.cover,
+                                                            ),
+                                                          ),
                                                           Positioned(
                                                             bottom: 0,
                                                             left: 0,
@@ -1013,12 +1017,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
 
                                                                     },
-                                                                    icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
+                                                                    tooltip: "Download", icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
                                                                   ),
                                                                   IconButton(onPressed: (){
                                                                     HomeCubit.get(context).insertToDatabase(fileV.link.toString(),video.image,true);
                                                                   },
-                                                                      icon: Icon(
+                                                                      tooltip: "Favorite", icon: Icon(
                                                                         HomeCubit.get(context)
                                                                             .favoriteVideo
                                                                             .contains(fileV.link.toString())
@@ -1051,7 +1055,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                             ).whenComplete(() =>
                                                                             AdInterstitialBottomSheet.showInterstitialAd());
                                                                       },
-                                                                      icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                                                                      tooltip: "Share", icon: const Icon(Icons.share, color: Colors.white, size: 30),
                                                                     );
                                                                   },
                                                                   ),
@@ -1213,12 +1217,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
 
                                                             },
-                                                            icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
+                                                            tooltip: "Download", icon: const Icon(Icons.file_download_outlined, color: Colors.white, size: 30),
                                                           ),
                                                           IconButton(onPressed: (){
                                                             HomeCubit.get(context).insertToDatabase(fileV.link.toString(),video.image,true);
                                                           },
-                                                              icon: Icon(
+                                                              tooltip: "Favorite", icon: Icon(
                                                                 HomeCubit.get(context)
                                                                     .favoriteVideo
                                                                     .contains(fileV.link.toString())
@@ -1250,7 +1254,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                                     ).whenComplete(() =>
                                                                     AdInterstitialBottomSheet.showInterstitialAd());
                                                               },
-                                                              icon: const Icon(Icons.share, color: Colors.white, size: 30),
+                                                              tooltip: "Share", icon: const Icon(Icons.share, color: Colors.white, size: 30),
                                                             );
                                                           },
                                                           ),
@@ -1323,8 +1327,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                                       BorderRadius.circular(10),
                                                       child: Stack(
                                                         children: [
-                                                          Image.asset(
-                                                              "assets/images/${categoryImages[index]}.jpg"),
+                                                          Positioned.fill(
+                                                            child: Image.asset(
+                                                              "assets/images/${categoryImages[index]}.jpg",
+                                                              fit: BoxFit.cover,
+                                                            ),
+                                                          ),
                                                           Positioned(
                                                             bottom: 0,
                                                             left: 0,

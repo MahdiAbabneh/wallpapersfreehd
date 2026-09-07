@@ -14,21 +14,23 @@ class HomeLayout extends StatelessWidget {
       listener: (context, state) {},
       builder: (context, state) {
         return Scaffold(
-          bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min,
-            children: [
-              BottomNavigationBar(
-                selectedItemColor: Theme.of(context).primaryColor,
-                unselectedItemColor: Colors.white,
-                items: cubit.item,
-                currentIndex:cubit.indexScreen ,
-                onTap: (index){
-                  cubit.selectItem(index);
-                },
-              ),
-              SizedBox(height: 10,),
-              const CustomBannerAd(),
-              SizedBox(height: 20,)
-            ],
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: Column(mainAxisSize: MainAxisSize.min,
+              children: [
+                BottomNavigationBar(
+                  selectedItemColor: Theme.of(context).primaryColor,
+                  unselectedItemColor: Colors.white,
+                  items: cubit.item,
+                  currentIndex:cubit.indexScreen ,
+                  onTap: (index){
+                    cubit.selectItem(index);
+                  },
+                ),
+                SizedBox(height: 10,),
+                const CustomBannerAd(),
+              ],
+            ),
           ),
           body:cubit.screen[cubit.indexScreen],
         );
