@@ -1,4 +1,3 @@
-import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +6,7 @@ import 'package:wallpaper_app/Layout/Home/home_layout.dart';
 import 'Layout/Home/cubit/cubit.dart';
 import 'Layout/Home/cubit/states.dart';
 import 'bloc_observer.dart';
+import 'design/theme.dart';
 import 'network/cache_helper.dart';
 
 void main() async{
@@ -41,12 +41,11 @@ class MyApp extends StatelessWidget {
         listener: (context, state) {},
         builder: (context, state) {
           return  MaterialApp(
-            theme: FlexThemeData.dark(
-              scheme: FlexScheme.mango,
-              fontFamily:"mali"),
+            theme: buildStudioTheme(),
+            themeMode: ThemeMode.dark,
             title: "Studio HD",
             debugShowCheckedModeBanner: false,
-            home:HomeLayout(),
+            home: const HomeLayout(),
           );
         },
       ),
