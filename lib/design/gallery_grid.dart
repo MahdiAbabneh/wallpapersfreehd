@@ -7,6 +7,7 @@ import '../Compouents/image_urls.dart';
 import '../Layout/Home/cubit/cubit.dart';
 import '../models/curated_photos.dart';
 import '../models/curated_videos.dart';
+import '../models/download_sizes.dart';
 import '../models/page_cursor.dart';
 import '../modules/Viewer/media_viewer.dart';
 import 'media_tile.dart';
@@ -168,9 +169,14 @@ class PhotoMasonry extends StatelessWidget {
                 heroTag: 'photo-${photo.id}',
                 previewUrl: url,
                 fullUrl: photo.src.portrait,
+                originalUrl: photo.src.original,
                 isVideo: false,
                 caption: photo.alt,
                 averageColor: photo.avgColor,
+                sourceSize: Size(
+                  photo.width.toDouble(),
+                  photo.height.toDouble(),
+                ),
                 isFavorite: cubit.favoriteImage.contains(url),
                 onFavorite: (_) => cubit.insertToDatabase(url, '', false),
               ),
@@ -236,6 +242,7 @@ class VideoMasonry extends StatelessWidget {
                 videoUrl: file.link,
                 isVideo: true,
                 averageColor: video.avgColor,
+                videoChoices: video.videoFiles.downloadChoices,
                 isFavorite: cubit.favoriteVideo.contains(file.link),
                 onFavorite: (_) =>
                     cubit.insertToDatabase(file.link, video.image, true),

@@ -11,6 +11,8 @@ import '../../compat/fijk_compat.dart';
 import '../../compat/share_compat.dart';
 import '../../design/components.dart';
 import '../../design/tokens.dart';
+import '../../models/download_sizes.dart';
+import 'save_sheet.dart';
 import '../../models/CustomInterstitialAd.dart';
 
 /// Full-screen viewer for one photograph or clip.
@@ -30,6 +32,9 @@ class MediaViewer extends StatefulWidget {
     this.videoUrl,
     this.caption,
     this.averageColor,
+    this.originalUrl,
+    this.sourceSize = Size.zero,
+    this.videoChoices = const <DownloadChoice>[],
   });
 
   final String heroTag;
@@ -37,14 +42,24 @@ class MediaViewer extends StatefulWidget {
   ///what the tile already has cached, so the first frame is instant
   final String previewUrl;
 
-  ///the full-resolution source, also what gets saved to the gallery
+  ///what is shown on screen: a rendition light enough to open at once
   final String fullUrl;
+
+  ///the untouched file the download sizes are cut from; without it "Original"
+  ///would quietly hand over the same small rendition being displayed
+  final String? originalUrl;
   final bool isVideo;
   final String? videoUrl;
   final bool isFavorite;
   final ValueChanged<bool> onFavorite;
   final String? caption;
   final String? averageColor;
+
+  ///the photograph's own pixels, so a size larger than it is never offered
+  final Size sourceSize;
+
+  ///for a clip: the renditions the provider actually has
+  final List<DownloadChoice> videoChoices;
 
   @override
   State<MediaViewer> createState() => _MediaViewerState();
@@ -74,19 +89,32 @@ class _MediaViewerState extends State<MediaViewer> {
     widget.onFavorite(_favorite);
   }
 
+  ///Download asks which size first: a wallpaper that already fits the screen
+  ///beats a 30MB original the phone will crop by itself
   Future<void> _save() async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    final HomeCubit cubit = HomeCubit.get(context);
-    if (widget.isVideo) {
-      await cubit.saveVideoInGallery(widget.videoUrl ?? widget.fullUrl);
-    } else {
-      cubit.file = widget.fullUrl;
-      await cubit.saveImageInGallery(widget.fullUrl);
-    }
-    if (!mounted) return;
-    setState(() => _busy = false);
-    _toast(widget.isVideo ? 'Video saved to your gallery' : 'Wallpaper saved to your gallery');
+    final Size screen = MediaQuery.sizeOf(context) *
+        MediaQuery.devicePixelRatioOf(context);
+
+    await SaveSheet.open(
+      context,
+      isVideo: widget.isVideo,
+      onAdjust: widget.isVideo ? null : _adjust,
+      choices: widget.isVideo
+          ? (widget.videoChoices.isNotEmpty
+              ? widget.videoChoices
+              : <DownloadChoice>[
+                  DownloadChoice(
+                    title: 'Save this clip',
+                    subtitle: 'The file you are watching',
+                    url: widget.videoUrl ?? widget.fullUrl,
+                  ),
+                ])
+          : DownloadSizes.forPhoto(
+              originalUrl: widget.originalUrl ?? widget.fullUrl,
+              screen: screen,
+              source: widget.sourceSize,
+            ),
+    );
     AdInterstitialBottomSheet.loadIntersitialAd();
   }
 
@@ -97,7 +125,7 @@ class _MediaViewerState extends State<MediaViewer> {
     setState(() => _busy = true);
     final HomeCubit cubit = HomeCubit.get(context);
     selectedTypeImage = 'JPG';
-    await cubit.croppedImage(widget.fullUrl);
+    await cubit.croppedImage(widget.originalUrl ?? widget.fullUrl);
     if (!mounted) return;
     setState(() => _busy = false);
     if (cubit.state is WallpaperCroppedImageSuccess) {
@@ -210,8 +238,7 @@ class _MediaViewerState extends State<MediaViewer> {
                   isVideo: widget.isVideo,
                   onSave: _save,
                   onFavorite: _toggleFavorite,
-                  onAdjust: _adjust,
-                  onShare: _share,
+                      onShare: _share,
                 ),
               ],
             ),
@@ -229,7 +256,6 @@ class _ActionBar extends StatelessWidget {
     required this.isVideo,
     required this.onSave,
     required this.onFavorite,
-    required this.onAdjust,
     required this.onShare,
   });
 
@@ -238,7 +264,6 @@ class _ActionBar extends StatelessWidget {
   final bool isVideo;
   final VoidCallback onSave;
   final VoidCallback onFavorite;
-  final VoidCallback onAdjust;
   final void Function(BuildContext context) onShare;
 
   @override
@@ -297,12 +322,7 @@ class _ActionBar extends StatelessWidget {
             label: favorite ? 'Saved' : 'Save',
             onTap: onFavorite,
           ),
-          if (!isVideo)
-            _BarIcon(
-              icon: Icons.crop_rounded,
-              label: 'Crop',
-              onTap: onAdjust,
-            ),
+
           Builder(
             builder: (BuildContext inner) => _BarIcon(
               icon: Icons.ios_share_rounded,
