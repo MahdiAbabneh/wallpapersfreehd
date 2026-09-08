@@ -78,32 +78,15 @@ class MediaTile extends StatelessWidget {
                   ),
                 ),
               ),
-            Positioned(
-              left: AppSpace.md,
-              right: 44,
-              bottom: AppSpace.md,
-              child: Row(
-                children: <Widget>[
-                  if (isVideo && duration != null)
-                    _Badge(text: _durationLabel)
-                  else if (caption != null && caption!.isNotEmpty)
-                    Flexible(
-                      child: Text(
-                        caption!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.caption.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          shadows: const <Shadow>[
-                            Shadow(blurRadius: 8, color: Color(0x99000000)),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
+            ///nothing is written over a wallpaper: only a clip says how long it
+            ///runs. The description still reaches screen readers through
+            ///[caption], and the eye reads it in the viewer
+            if (isVideo && duration != null)
+              Positioned(
+                left: AppSpace.md,
+                bottom: AppSpace.md,
+                child: _Badge(text: _durationLabel),
               ),
-            ),
             Positioned(
               right: 2,
               bottom: 2,

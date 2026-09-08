@@ -170,24 +170,6 @@ class _MediaViewerState extends State<MediaViewer> {
                   onTap: () => Navigator.of(context).maybePop(),
                 ),
                 const Spacer(),
-                if (widget.caption != null && widget.caption!.isNotEmpty)
-                  Flexible(
-                    child: GlassPanel(
-                      radius: AppRadius.chip,
-                      opacity: 0.3,
-                      blur: 12,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpace.md, vertical: 7),
-                        child: Text(
-                          widget.caption!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppText.caption.copyWith(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -195,14 +177,43 @@ class _MediaViewerState extends State<MediaViewer> {
             left: AppSpace.lg,
             right: AppSpace.lg,
             bottom: safe.bottom + AppSpace.lg,
-            child: _ActionBar(
-              busy: _busy,
-              favorite: _favorite,
-              isVideo: widget.isVideo,
-              onSave: _save,
-              onFavorite: _toggleFavorite,
-              onAdjust: _adjust,
-              onShare: _share,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                ///what the picture shows, read across the full width instead of
+                ///squeezed into a chip beside the close button
+                if (widget.caption != null && widget.caption!.isNotEmpty)
+                  Padding(
+                    ///lifted clear of the action bar so the whole line lands on
+                    ///the picture instead of straddling the black band below it
+                    padding: const EdgeInsets.only(
+                        left: AppSpace.sm,
+                        right: AppSpace.sm,
+                        bottom: AppSpace.xxxl),
+                    child: Text(
+                      widget.caption!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.caption.copyWith(
+                        color: Colors.white,
+                        height: 1.35,
+                        shadows: const <Shadow>[
+                          Shadow(blurRadius: 12, color: Color(0xCC000000)),
+                        ],
+                      ),
+                    ),
+                  ),
+                _ActionBar(
+                  busy: _busy,
+                  favorite: _favorite,
+                  isVideo: widget.isVideo,
+                  onSave: _save,
+                  onFavorite: _toggleFavorite,
+                  onAdjust: _adjust,
+                  onShare: _share,
+                ),
+              ],
             ),
           ),
         ],

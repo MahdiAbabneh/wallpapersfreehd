@@ -158,7 +158,8 @@ class PhotoMasonry extends StatelessWidget {
           imageUrl: url,
           heroTag: 'photo-${photo.id}',
           averageColor: photo.avgColor,
-          caption: photo.photographer,
+          ///not drawn on the tile any more; it is what a screen reader speaks
+          caption: photo.alt,
           isFavorite: favorite,
           onFavorite: () => cubit.insertToDatabase(url, '', false),
           onTap: () => Navigator.of(context).push(
@@ -168,7 +169,7 @@ class PhotoMasonry extends StatelessWidget {
                 previewUrl: url,
                 fullUrl: photo.src.portrait,
                 isVideo: false,
-                caption: photo.photographer,
+                caption: photo.alt,
                 averageColor: photo.avgColor,
                 isFavorite: cubit.favoriteImage.contains(url),
                 onFavorite: (_) => cubit.insertToDatabase(url, '', false),
