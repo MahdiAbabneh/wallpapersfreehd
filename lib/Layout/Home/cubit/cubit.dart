@@ -10,6 +10,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:wallpaper_app/Compouents/constant_empty.dart';
 import 'package:wallpaper_app/Layout/Home/cubit/states.dart';
 import 'package:wallpaper_app/models/curated_photos.dart';
+import 'package:wallpaper_app/models/content_filter.dart';
 import 'package:wallpaper_app/models/curated_videos.dart';
 import 'package:wallpaper_app/models/page_cursor.dart';
 import 'package:wallpaper_app/modules/WallpaperCategory/category_screen.dart';
@@ -97,7 +98,7 @@ class HomeCubit extends Cubit<HomeStates> {
         url: 'https://api.pexels.com/v1/curated/?page=${homePhotoCursor.page}'
             '&per_page=${homePhotoCursor.perPage}',
       );
-      final CuratedPhotos data = CuratedPhotos.fromJson(value.data);
+      final CuratedPhotos data = _screen(CuratedPhotos.fromJson(value.data));
       if (more) {
         appendPhotos(curatedPhotos!, data.photos);
       } else {
@@ -111,6 +112,19 @@ class HomeCubit extends Cubit<HomeStates> {
       ///a failed extra page must not wipe what the user is already looking at
       emit(more ? WallpaperGetDataSuccess() : WallpaperGetDataError());
     }
+  }
+
+
+  ///Nothing suggestive reaches a grid, whatever was searched: the provider has
+  ///no safe-search switch, so each result is read and dropped here.
+  CuratedPhotos _screen(CuratedPhotos data) {
+    data.photos.retainWhere((Photos p) => !ContentFilter.blocksPhoto(p));
+    return data;
+  }
+
+  VideoModel _screenVideos(VideoModel data) {
+    data.videos.retainWhere((Video v) => !ContentFilter.blocksVideo(v));
+    return data;
   }
 
   ///the feed is live, so the same photo can come back on a later page
@@ -143,7 +157,7 @@ class HomeCubit extends Cubit<HomeStates> {
         url: 'https://api.pexels.com/videos/popular/?page=${homeVideoCursor.page}'
             '&per_page=${homeVideoCursor.perPage}',
       );
-      final VideoModel data = VideoModel.fromJson(value.data);
+      final VideoModel data = _screenVideos(VideoModel.fromJson(value.data));
       if (more) {
         appendVideos(curatedVideo!, data.videos);
       } else {
@@ -216,7 +230,7 @@ class HomeCubit extends Cubit<HomeStates> {
         url: 'https://api.pexels.com/v1/search?query=$_searchPhotoQuery'
             '&page=${searchPhotoCursor.page}&per_page=${searchPhotoCursor.perPage}',
       );
-      final CuratedPhotos data = CuratedPhotos.fromJson(value.data);
+      final CuratedPhotos data = _screen(CuratedPhotos.fromJson(value.data));
       if (more) {
         appendPhotos(curatedSearchPhotos!, data.photos);
       } else {
@@ -254,7 +268,7 @@ class HomeCubit extends Cubit<HomeStates> {
         url: 'https://api.pexels.com/videos/search?query=$_searchVideoQuery'
             '&page=${searchVideoCursor.page}&per_page=${searchVideoCursor.perPage}',
       );
-      final VideoModel data = VideoModel.fromJson(value.data);
+      final VideoModel data = _screenVideos(VideoModel.fromJson(value.data));
       if (more) {
         appendVideos(curatedSearchVideo!, data.videos);
       } else {
@@ -292,7 +306,7 @@ class HomeCubit extends Cubit<HomeStates> {
         url: 'https://api.pexels.com/v1/search?query=$_selectPhotoQuery'
             '&page=${selectPhotoCursor.page}&per_page=${selectPhotoCursor.perPage}',
       );
-      CuratedPhotos data = CuratedPhotos.fromJson(value.data);
+      CuratedPhotos data = _screen(CuratedPhotos.fromJson(value.data));
       ///a narrow category can be shorter than the random page we picked
       if (!more && data.photos.isEmpty && selectPhotoCursor.page != 1) {
         selectPhotoCursor.reset(1);
@@ -300,7 +314,7 @@ class HomeCubit extends Cubit<HomeStates> {
           url: 'https://api.pexels.com/v1/search?query=$_selectPhotoQuery'
               '&page=1&per_page=${selectPhotoCursor.perPage}',
         );
-        data = CuratedPhotos.fromJson(retry.data);
+        data = _screen(CuratedPhotos.fromJson(retry.data));
       }
       if (more) {
         appendPhotos(curatedSearchSelectPhotos!, data.photos);
@@ -338,14 +352,14 @@ class HomeCubit extends Cubit<HomeStates> {
         url: 'https://api.pexels.com/videos/search?query=$_selectVideoQuery'
             '&page=${selectVideoCursor.page}&per_page=${selectVideoCursor.perPage}',
       );
-      VideoModel data = VideoModel.fromJson(value.data);
+      VideoModel data = _screenVideos(VideoModel.fromJson(value.data));
       if (!more && data.videos.isEmpty && selectVideoCursor.page != 1) {
         selectVideoCursor.reset(1);
         final retry = await DioHelper.getData(
           url: 'https://api.pexels.com/videos/search?query=$_selectVideoQuery'
               '&page=1&per_page=${selectVideoCursor.perPage}',
         );
-        data = VideoModel.fromJson(retry.data);
+        data = _screenVideos(VideoModel.fromJson(retry.data));
       }
       if (more) {
         appendVideos(curatedSearchSelectVideos!, data.videos);
@@ -535,7 +549,7 @@ class HomeCubit extends Cubit<HomeStates> {
     await  DioHelper.getData(
       url: 'https://api.pexels.com/v1/curated/?page=$randomNumber&per_page=40',
     ).then((value) {
-      curatedPhotosCategory=CuratedPhotos.fromJson(value.data);
+      curatedPhotosCategory=_screen(CuratedPhotos.fromJson(value.data));
       emit(WallpaperGetDataCategorySuccess());
     }).catchError((error) {
       print(error.toString());
@@ -551,7 +565,7 @@ class HomeCubit extends Cubit<HomeStates> {
     await  DioHelper.getData(
       url: 'https://api.pexels.com/videos/popular/?page=$randomNumber&per_page=40',
     ).then((value) {
-      curatedVideoCategory=VideoModel.fromJson(value.data);
+      curatedVideoCategory=_screenVideos(VideoModel.fromJson(value.data));
       emit(WallpaperGetDataCategorySuccess());
     }).catchError((error) {
       print(error.toString());

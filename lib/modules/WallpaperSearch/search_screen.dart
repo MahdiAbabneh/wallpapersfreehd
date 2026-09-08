@@ -11,12 +11,9 @@ import '../../design/gallery_grid.dart';
 import '../../design/tokens.dart';
 import '../../models/BackendService.dart';
 import '../../models/categories.dart';
+import '../../models/content_filter.dart';
 import '../../network/cache_helper.dart';
 
-///words the app will not look up
-const List<String> _blocked = <String>[
-  'sex', 'gay', 'ass', 'boobs', 'nude', 'porn',
-];
 
 const String _recentsKey = 'recentSearches';
 const int _recentsLimit = 8;
@@ -85,11 +82,11 @@ class _SearchScreenState extends State<SearchScreen> {
           await BackendService.getSuggestions(value.trim());
       if (!mounted) return;
       setState(() {
-        _suggestions = result
+        _suggestions = ContentFilter.cleanWords(result
             .map((Map<String, String> e) => e['name'] ?? '')
             .where((String e) => e.isNotEmpty && e.toLowerCase() != value.trim().toLowerCase())
             .take(8)
-            .toList();
+            .toList());
       });
     });
   }
@@ -107,11 +104,13 @@ class _SearchScreenState extends State<SearchScreen> {
   void _submit(String raw) {
     final String label = raw.trim();
     if (label.isEmpty) return;
-    if (_blocked.contains(label.toLowerCase())) {
+    if (ContentFilter.blocksQuery(label)) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('That word cannot be searched')),
+          const SnackBar(
+            content: Text('This app does not show that kind of content'),
+          ),
         );
       return;
     }
