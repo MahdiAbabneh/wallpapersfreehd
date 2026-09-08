@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../Layout/Home/cubit/cubit.dart';
@@ -10,11 +11,21 @@ import '../../design/gallery_grid.dart';
 import '../../design/tokens.dart';
 import '../../models/BackendService.dart';
 import '../../models/categories.dart';
+import '../../network/cache_helper.dart';
 
 ///words the app will not look up
-const List<String> _blocked = <String>['sex', 'gay', 'ass', 'boobs', 'nude'];
+const List<String> _blocked = <String>[
+  'sex', 'gay', 'ass', 'boobs', 'nude', 'porn',
+];
 
-/// Search: one field, live suggestions, and the same gallery underneath.
+const String _recentsKey = 'recentSearches';
+const int _recentsLimit = 8;
+
+/// Search.
+///
+/// The field, what has been looked for before, and the results all describe the
+/// same state: clearing the field clears the results, and the header always
+/// says what is on screen.
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -26,9 +37,23 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focus = FocusNode();
   Timer? _debounce;
+
   List<String> _suggestions = <String>[];
+  List<String> _recents = <String>[];
   int _tab = 0;
-  String _query = '';
+
+  ///what the reader typed or tapped, shown in the field and the header
+  String _label = '';
+
+  ///what Pexels is actually asked; differs when a shelf name was tapped
+  String _term = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _recents =
+        CacheHelper.sharedPreferences?.getStringList(_recentsKey) ?? <String>[];
+  }
 
   @override
   void dispose() {
@@ -38,8 +63,18 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
+  ///a shelf name is a label, not a search term
+  String _termFor(String label) {
+    for (final Collection c in kCollections) {
+      if (c.name.toLowerCase() == label.toLowerCase()) return c.query;
+    }
+    return label;
+  }
+
   void _onChanged(String value) {
     _debounce?.cancel();
+    ///rebuild on every keystroke so the clear button appears with the first letter
+    setState(() {});
     if (value.trim().length < 3) {
       if (_suggestions.isNotEmpty) setState(() => _suggestions = <String>[]);
       return;
@@ -52,17 +87,27 @@ class _SearchScreenState extends State<SearchScreen> {
       setState(() {
         _suggestions = result
             .map((Map<String, String> e) => e['name'] ?? '')
-            .where((String e) => e.isNotEmpty)
+            .where((String e) => e.isNotEmpty && e.toLowerCase() != value.trim().toLowerCase())
             .take(8)
             .toList();
       });
     });
   }
 
+  void _remember(String label) {
+    _recents
+      ..removeWhere((String e) => e.toLowerCase() == label.toLowerCase())
+      ..insert(0, label);
+    if (_recents.length > _recentsLimit) {
+      _recents = _recents.sublist(0, _recentsLimit);
+    }
+    CacheHelper.sharedPreferences?.setStringList(_recentsKey, _recents);
+  }
+
   void _submit(String raw) {
-    final String value = raw.trim().toLowerCase();
-    if (value.isEmpty) return;
-    if (_blocked.contains(value)) {
+    final String label = raw.trim();
+    if (label.isEmpty) return;
+    if (_blocked.contains(label.toLowerCase())) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -70,18 +115,43 @@ class _SearchScreenState extends State<SearchScreen> {
         );
       return;
     }
+    HapticFeedback.selectionClick();
     _focus.unfocus();
-    _controller.text = value;
+    _controller.text = label;
+    _remember(label);
     setState(() {
-      _query = value;
+      _label = label;
+      _term = _termFor(label);
       _suggestions = <String>[];
     });
+    _run();
+  }
+
+  void _run() {
     final HomeCubit cubit = HomeCubit.get(context);
     if (_tab == 0) {
-      cubit.searchImages(value);
+      cubit.searchImages(_term);
     } else {
-      cubit.searchVideo(value);
+      cubit.searchVideo(_term);
     }
+  }
+
+  ///an empty field means an empty screen: leaving results behind a cleared
+  ///field is what made the search feel broken
+  void _clear() {
+    _debounce?.cancel();
+    _controller.clear();
+    setState(() {
+      _label = '';
+      _term = '';
+      _suggestions = <String>[];
+    });
+    _focus.requestFocus();
+  }
+
+  void _clearRecents() {
+    setState(() => _recents = <String>[]);
+    CacheHelper.sharedPreferences?.remove(_recentsKey);
   }
 
   @override
@@ -97,8 +167,10 @@ class _SearchScreenState extends State<SearchScreen> {
               bottom: false,
               child: Column(
                 children: <Widget>[
-                  const ScreenHeader(
-                    eyebrow: 'Find something exact',
+                  ScreenHeader(
+                    eyebrow: _label.isEmpty
+                        ? 'Find something exact'
+                        : _resultLine(cubit, photos),
                     title: 'Search',
                   ),
                   Padding(
@@ -108,6 +180,8 @@ class _SearchScreenState extends State<SearchScreen> {
                       controller: _controller,
                       focusNode: _focus,
                       textInputAction: TextInputAction.search,
+                      textCapitalization: TextCapitalization.none,
+                      autocorrect: false,
                       style: AppText.body,
                       cursorColor: AppColors.accent,
                       onChanged: _onChanged,
@@ -122,11 +196,9 @@ class _SearchScreenState extends State<SearchScreen> {
                             ? null
                             : IconButton(
                                 tooltip: 'Clear',
-                                icon: const Icon(Icons.close_rounded, size: 18),
-                                onPressed: () {
-                                  _controller.clear();
-                                  setState(() => _suggestions = <String>[]);
-                                },
+                                icon: const Icon(Icons.close_rounded,
+                                    size: 18, color: AppColors.textDim),
+                                onPressed: _clear,
                               ),
                       ),
                     ),
@@ -144,7 +216,8 @@ class _SearchScreenState extends State<SearchScreen> {
                       index: _tab,
                       onChanged: (int i) {
                         setState(() => _tab = i);
-                        if (_query.isNotEmpty) _submit(_query);
+                        ///the same words, asked of the other library
+                        if (_term.isNotEmpty) _run();
                       },
                     ),
                   ),
@@ -153,33 +226,43 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
             if (_suggestions.isNotEmpty)
-              _SuggestionRow(words: _suggestions, onPick: _submit)
-            else if (_query.isEmpty)
-              _SuggestionRow(
+              _ChipRow(words: _suggestions, onPick: _submit)
+            else if (_label.isEmpty) ...<Widget>[
+              if (_recents.isNotEmpty)
+                _ChipRow(
+                  words: _recents,
+                  onPick: _submit,
+                  title: 'Recent',
+                  onClear: _clearRecents,
+                ),
+              _ChipRow(
                 words: kCollections
                     .take(8)
                     .map((Collection c) => c.name)
                     .toList(),
-                ///the chip shows the shelf name but searches its real term
-                onPick: (String name) => _submit(
-                  kCollections
-                      .firstWhere((Collection c) => c.name == name,
-                          orElse: () => Collection(name, name, Colors.black))
-                      .query,
-                ),
+                onPick: _submit,
                 title: 'Popular',
               ),
-            Expanded(
-              child: _results(cubit, state, photos),
-            ),
+            ],
+            Expanded(child: _results(cubit, state, photos)),
           ],
         );
       },
     );
   }
 
+  ///the header doubles as the result count, so the reader always knows what
+  ///they are looking at
+  String _resultLine(HomeCubit cubit, bool photos) {
+    final int count = photos
+        ? (cubit.curatedSearchPhotos?.photos.length ?? 0)
+        : (cubit.curatedSearchVideo?.videos.length ?? 0);
+    if (count == 0) return '“$_label”';
+    return '$count for “$_label”';
+  }
+
   Widget _results(HomeCubit cubit, HomeStates state, bool photos) {
-    if (_query.isEmpty) {
+    if (_label.isEmpty) {
       return const StatusView(
         icon: Icons.search_rounded,
         title: 'What are you looking for?',
@@ -187,47 +270,68 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
     if (state is WallpaperSearchImageLoading) return const GallerySkeleton();
+    if (state is WallpaperSearchImageError) {
+      return StatusView(
+        icon: Icons.wifi_off_rounded,
+        title: 'No connection',
+        message: 'Check your network and search again.',
+        action: FilledButton(onPressed: _run, child: const Text('Retry')),
+      );
+    }
 
     if (photos) {
       final model = cubit.curatedSearchPhotos;
-      if (model == null || model.photos.isEmpty) {
-        return StatusView(
-          icon: Icons.image_not_supported_outlined,
-          title: 'Nothing for “$_query”',
-          message: 'Try a different word.',
-        );
-      }
+      if (model == null || model.photos.isEmpty) return _nothing();
       return PhotoMasonry(
         photos: model.photos,
         cursor: cubit.searchPhotoCursor,
         onLoadMore: () => cubit.searchImages(null, more: true),
-        onRefresh: () async => cubit.searchImages(_query),
+        onRefresh: () async => cubit.searchImages(_term),
       );
     }
 
     final model = cubit.curatedSearchVideo;
-    if (model == null || model.videos.isEmpty) {
-      return StatusView(
-        icon: Icons.videocam_off_outlined,
-        title: 'Nothing for “$_query”',
-        message: 'Try a different word.',
-      );
-    }
+    if (model == null || model.videos.isEmpty) return _nothing();
     return VideoMasonry(
       videos: model.videos,
       cursor: cubit.searchVideoCursor,
       onLoadMore: () => cubit.searchVideo(null, more: true),
-      onRefresh: () async => cubit.searchVideo(_query),
+      onRefresh: () async => cubit.searchVideo(_term),
     );
   }
+
+  Widget _nothing() => StatusView(
+        icon: Icons.image_not_supported_outlined,
+        title: 'Nothing for “$_label”',
+        message: 'Try a shorter word, or pick one below.',
+        action: Wrap(
+          spacing: AppSpace.sm,
+          children: kCollections
+              .take(4)
+              .map((Collection c) => ActionChip(
+                    label: Text(c.name, style: AppText.label),
+                    backgroundColor: AppColors.surface,
+                    side: const BorderSide(color: AppColors.line),
+                    onPressed: () => _submit(c.name),
+                  ))
+              .toList(),
+        ),
+      );
 }
 
-class _SuggestionRow extends StatelessWidget {
-  const _SuggestionRow({required this.words, required this.onPick, this.title});
+/// A scrolling row of words: suggestions, recents or popular shelves.
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({
+    required this.words,
+    required this.onPick,
+    this.title,
+    this.onClear,
+  });
 
   final List<String> words;
   final ValueChanged<String> onPick;
   final String? title;
+  final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -237,8 +341,25 @@ class _SuggestionRow extends StatelessWidget {
         if (title != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpace.xl, 0, AppSpace.xl, AppSpace.sm),
-            child: Text(title!.toUpperCase(), style: AppText.eyebrow),
+                AppSpace.xl, 0, AppSpace.lg, AppSpace.sm),
+            child: Row(
+              children: <Widget>[
+                Text(title!.toUpperCase(), style: AppText.eyebrow),
+                const Spacer(),
+                if (onClear != null)
+                  Pressable(
+                    onTap: onClear,
+                    semanticLabel: 'Clear recent searches',
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpace.sm, vertical: 2),
+                      child: Text('Clear',
+                          style: AppText.eyebrow
+                              .copyWith(color: AppColors.textDim)),
+                    ),
+                  ),
+              ],
+            ),
           ),
         SizedBox(
           height: 38,
@@ -250,8 +371,7 @@ class _SuggestionRow extends StatelessWidget {
             itemBuilder: (BuildContext context, int index) => Pressable(
               onTap: () => onPick(words[index]),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: AppColors.surface,
