@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../Compouents/constant_empty.dart';
 import '../../Layout/Home/cubit/cubit.dart';
 import '../../Layout/Home/cubit/states.dart';
 import '../../design/components.dart';
 import '../../design/gallery_grid.dart';
 import '../../design/tokens.dart';
 import '../../models/BackendService.dart';
+import '../../models/categories.dart';
 
 ///words the app will not look up
 const List<String> _blocked = <String>['sex', 'gay', 'ass', 'boobs', 'nude'];
@@ -156,8 +156,17 @@ class _SearchScreenState extends State<SearchScreen> {
               _SuggestionRow(words: _suggestions, onPick: _submit)
             else if (_query.isEmpty)
               _SuggestionRow(
-                words: categoryImages.take(8).toList(),
-                onPick: _submit,
+                words: kCollections
+                    .take(8)
+                    .map((Collection c) => c.name)
+                    .toList(),
+                ///the chip shows the shelf name but searches its real term
+                onPick: (String name) => _submit(
+                  kCollections
+                      .firstWhere((Collection c) => c.name == name,
+                          orElse: () => Collection(name, name, Colors.black))
+                      .query,
+                ),
                 title: 'Popular',
               ),
             Expanded(

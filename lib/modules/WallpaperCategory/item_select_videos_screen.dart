@@ -39,9 +39,9 @@ class ItemSelectVideosScreen extends StatelessWidget {
                         videos: cubit.curatedSearchSelectVideos!.videos,
                         cursor: cubit.selectVideoCursor,
                         onLoadMore: () =>
-                            cubit.searchSelectVideos(titleCategory, more: true),
+                            cubit.searchSelectVideos(categoryQuery, more: true),
                         onRefresh: () =>
-                            cubit.searchSelectVideos(titleCategory),
+                            cubit.searchSelectVideos(categoryQuery),
                       ),
               ),
             ],

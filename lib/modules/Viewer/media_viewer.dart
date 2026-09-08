@@ -6,6 +6,7 @@ import 'package:photo_view/photo_view.dart';
 import '../../Compouents/constant_empty.dart';
 import '../../Compouents/image_urls.dart';
 import '../../Layout/Home/cubit/cubit.dart';
+import '../../Layout/Home/cubit/states.dart';
 import '../../compat/fijk_compat.dart';
 import '../../compat/share_compat.dart';
 import '../../design/components.dart';
@@ -89,6 +90,8 @@ class _MediaViewerState extends State<MediaViewer> {
     AdInterstitialBottomSheet.loadIntersitialAd();
   }
 
+  ///crop opens the editor and, when the reader confirms, writes the result to
+  ///the gallery; cancelling leaves nothing behind, so nothing is announced
   Future<void> _adjust() async {
     if (_busy) return;
     setState(() => _busy = true);
@@ -97,6 +100,9 @@ class _MediaViewerState extends State<MediaViewer> {
     await cubit.croppedImage(widget.fullUrl);
     if (!mounted) return;
     setState(() => _busy = false);
+    if (cubit.state is WallpaperCroppedImageSuccess) {
+      _toast('Cropped wallpaper saved to your gallery');
+    }
   }
 
   Future<void> _share(BuildContext context) async {
@@ -263,7 +269,7 @@ class _ActionBar extends StatelessWidget {
                           size: 18, color: AppColors.onAccent),
                     const SizedBox(width: AppSpace.sm),
                     Text(
-                      busy ? 'Saving' : 'Save',
+                      busy ? 'Saving…' : 'Download',
                       style: AppText.label.copyWith(color: AppColors.onAccent),
                     ),
                   ],
@@ -277,13 +283,13 @@ class _ActionBar extends StatelessWidget {
                 ? Icons.favorite_rounded
                 : Icons.favorite_outline_rounded,
             color: favorite ? AppColors.accent : Colors.white,
-            label: 'Favourite',
+            label: favorite ? 'Saved' : 'Save',
             onTap: onFavorite,
           ),
           if (!isVideo)
             _BarIcon(
-              icon: Icons.crop_rotate_rounded,
-              label: 'Adjust and save',
+              icon: Icons.crop_rounded,
+              label: 'Crop',
               onTap: onAdjust,
             ),
           Builder(
@@ -308,6 +314,9 @@ class _BarIcon extends StatelessWidget {
   });
 
   final IconData icon;
+
+  ///written under the glyph, not only spoken to the screen reader: a crop icon
+  ///on its own does not tell anyone what the button will do
   final String label;
   final VoidCallback onTap;
   final Color? color;
@@ -318,9 +327,26 @@ class _BarIcon extends StatelessWidget {
       onTap: onTap,
       semanticLabel: label,
       child: SizedBox(
-        width: 46,
-        height: 46,
-        child: Icon(icon, size: 21, color: color ?? Colors.white),
+        width: 58,
+        height: 50,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(icon, size: 20, color: color ?? Colors.white),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: AppText.caption.copyWith(
+                fontSize: 10,
+                letterSpacing: 0,
+                height: 1,
+                color: color ?? Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

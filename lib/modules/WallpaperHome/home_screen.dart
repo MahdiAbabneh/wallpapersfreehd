@@ -34,15 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
               bottom: false,
               child: Column(
                 children: <Widget>[
-                  ScreenHeader(
+                  const ScreenHeader(
                     eyebrow: 'Curated today',
                     title: 'Studio',
-                    trailing: GlassIconButton(
-                      icon: Icons.refresh_rounded,
-                      label: 'Load a new set',
-                      onTap: () =>
-                          photos ? cubit.getHomeData() : cubit.getHomeData2(),
-                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(

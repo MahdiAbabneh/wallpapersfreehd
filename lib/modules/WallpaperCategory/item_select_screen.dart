@@ -39,9 +39,9 @@ class ItemSelectScreen extends StatelessWidget {
                         photos: cubit.curatedSearchSelectPhotos!.photos,
                         cursor: cubit.selectPhotoCursor,
                         onLoadMore: () =>
-                            cubit.searchSelectImages(titleCategory, more: true),
+                            cubit.searchSelectImages(categoryQuery, more: true),
                         onRefresh: () =>
-                            cubit.searchSelectImages(titleCategory),
+                            cubit.searchSelectImages(categoryQuery),
                       ),
               ),
             ],

@@ -1,13 +1,17 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../../Compouents/constant_empty.dart';
+import '../../Compouents/image_urls.dart';
 import '../../Layout/Home/cubit/cubit.dart';
 import '../../Layout/Home/cubit/states.dart';
 import '../../design/components.dart';
 import '../../design/gallery_grid.dart';
 import '../../design/tokens.dart';
+import '../../models/categories.dart';
+import '../../models/category_covers.dart';
 import 'item_select_screen.dart';
 import 'item_select_videos_screen.dart';
 
@@ -26,16 +30,23 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   int _tab = 0;
 
-  void _open(BuildContext context, String name) {
+  @override
+  void initState() {
+    super.initState();
+    CategoryCovers.instance.load();
+  }
+
+  void _open(BuildContext context, Collection collection) {
     final HomeCubit cubit = HomeCubit.get(context);
-    titleCategory = name;
+    titleCategory = collection.name;
+    categoryQuery = collection.query;
     if (_tab == 0) {
-      cubit.searchSelectImages(name);
+      cubit.searchSelectImages(collection.query);
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const ItemSelectScreen()),
       );
     } else {
-      cubit.searchSelectVideos(name);
+      cubit.searchSelectVideos(collection.query);
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const ItemSelectVideosScreen()),
       );
@@ -54,8 +65,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
               bottom: false,
               child: Column(
                 children: <Widget>[
-                  const ScreenHeader(
-                    eyebrow: 'Twelve collections',
+                  ScreenHeader(
+                    eyebrow: '${kCollections.length} collections',
                     title: 'Themes',
                   ),
                   Padding(
@@ -76,15 +87,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
               ),
             ),
             Expanded(
-              child: AnimationLimiter(
+              child: RefreshIndicator(
+                onRefresh: () => CategoryCovers.instance.load(force: true),
+                color: AppColors.accent,
+                backgroundColor: AppColors.surfaceHigh,
+                child: AnimationLimiter(
                 child: GridView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
                   padding: EdgeInsets.fromLTRB(
                     AppSpace.lg,
                     0,
                     AppSpace.lg,
                     kNavBarInset + bottom + 50,
                   ),
-                  physics: const BouncingScrollPhysics(),
                   gridDelegate:
                       const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -92,9 +109,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     crossAxisSpacing: AppSpace.md,
                     childAspectRatio: 0.82,
                   ),
-                  itemCount: categoryImages.length,
+                  itemCount: kCollections.length,
                   itemBuilder: (BuildContext context, int index) {
-                    final String name = categoryImages[index];
+                    final Collection collection = kCollections[index];
                     return AnimationConfiguration.staggeredGrid(
                       position: index,
                       columnCount: 2,
@@ -104,14 +121,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         curve: AppDuration.curve,
                         child: FadeInAnimation(
                           child: _ThemeCard(
-                            name: name,
-                            onTap: () => _open(context, name),
+                            collection: collection,
+                            onTap: () => _open(context, collection),
                           ),
                         ),
                       ),
                     );
                   },
                 ),
+              ),
               ),
             ),
           ],
@@ -122,13 +140,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
 }
 
 class _ThemeCard extends StatelessWidget {
-  const _ThemeCard({required this.name, required this.onTap});
+  const _ThemeCard({required this.collection, required this.onTap});
 
-  final String name;
+  final Collection collection;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final String name = collection.name;
     return Pressable(
       onTap: onTap,
       semanticLabel: '$name collection',
@@ -137,7 +156,36 @@ class _ThemeCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            Image.asset('assets/images/$name.jpg', fit: BoxFit.cover),
+            ///the shelf's own tone holds the card until its cover lands, which
+            ///is why twelve bundled JPGs no longer ship with the app
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    collection.tint,
+                    Color.alphaBlend(Colors.black38, collection.tint),
+                  ],
+                ),
+              ),
+              child: const SizedBox.expand(),
+            ),
+            ValueListenableBuilder<Map<String, String>>(
+              valueListenable: CategoryCovers.instance.covers,
+              builder: (BuildContext context, Map<String, String> covers, _) {
+                final String? url = covers[name];
+                if (url == null) return const SizedBox.shrink();
+                return CachedNetworkImage(
+                  imageUrl: thumbUrl(url),
+                  memCacheWidth: 600,
+                  fit: BoxFit.cover,
+                  fadeInDuration: AppDuration.slow,
+                  placeholder: (_, __) => const SizedBox.shrink(),
+                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                );
+              },
+            ),
             const TileScrim(height: 0.7),
             Padding(
               padding: const EdgeInsets.all(AppSpace.md),
