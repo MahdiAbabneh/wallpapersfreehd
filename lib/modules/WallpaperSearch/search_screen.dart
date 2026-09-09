@@ -14,7 +14,6 @@ import '../../models/categories.dart';
 import '../../models/content_filter.dart';
 import '../../network/cache_helper.dart';
 
-
 const String _recentsKey = 'recentSearches';
 
 ///Pexels filters by colour, which is the one thing Search can do that browsing
@@ -90,12 +89,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onChanged(String value) {
     _debounce?.cancel();
+
     ///rebuild on every keystroke so the clear button appears with the first letter
     setState(() {});
     if (value.trim().length < 3) {
       if (_suggestions.isNotEmpty) setState(() => _suggestions = <String>[]);
       return;
     }
+
     ///one request per pause in typing, not one per keystroke
     _debounce = Timer(const Duration(milliseconds: 320), () async {
       final List<Map<String, String>> result =
@@ -104,7 +105,8 @@ class _SearchScreenState extends State<SearchScreen> {
       setState(() {
         _suggestions = ContentFilter.cleanWords(result
             .map((Map<String, String> e) => e['name'] ?? '')
-            .where((String e) => e.isNotEmpty && e.toLowerCase() != value.trim().toLowerCase())
+            .where((String e) =>
+                e.isNotEmpty && e.toLowerCase() != value.trim().toLowerCase())
             .take(8)
             .toList());
       });
@@ -258,6 +260,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       index: _tab,
                       onChanged: (int i) {
                         setState(() => _tab = i);
+
                         ///the same words, asked of the other library
                         if (_term.isNotEmpty) _run();
                       },
@@ -276,6 +279,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 title: 'Recent',
                 onClear: _clearRecents,
               ),
+
             ///the shelves already live in Themes; what Search adds is colour
             _ColourRow(selected: _colour, onPick: _pickColour),
             Expanded(child: _results(cubit, state, photos)),
@@ -291,7 +295,10 @@ class _SearchScreenState extends State<SearchScreen> {
     final int count = photos
         ? (cubit.curatedSearchPhotos?.photos.length ?? 0)
         : (cubit.curatedSearchVideo?.videos.length ?? 0);
-    final String colour = _colour.isEmpty ? '' : ' · $_colour';
+    ///a colour-only search is already named after its colour; saying it twice
+    ///reads as a mistake
+    final String colour =
+        _colour.isEmpty || _colour == _label ? '' : ' · $_colour';
     if (count == 0) return '“$_label”$colour';
     return '$count for “$_label”$colour';
   }
@@ -424,6 +431,52 @@ class _ChipRow extends StatelessWidget {
   }
 }
 
+/// One tone in the filter row — or, first in the row, the lack of one.
+class _Swatch extends StatelessWidget {
+  const _Swatch({
+    required this.name,
+    required this.label,
+    required this.active,
+    required this.onPick,
+    this.colour,
+    this.gradient,
+  });
+
+  final String name;
+  final String label;
+  final bool active;
+  final ValueChanged<String> onPick;
+  final Color? colour;
+  final Gradient? gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      selected: active,
+      button: true,
+      label: label,
+      child: Pressable(
+        onTap: () => onPick(name),
+        child: Center(
+          child: AnimatedContainer(
+            duration: AppDuration.fast,
+            width: active ? 34 : 30,
+            height: active ? 34 : 30,
+            decoration: BoxDecoration(
+              color: colour,
+              gradient: gradient,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: active ? AppColors.accent : AppColors.lineStrong,
+                width: active ? 2.5 : 1,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// The colour filter: a row of tones, one of which can be active.
 class _ColourRow extends StatelessWidget {
@@ -452,34 +505,36 @@ class _ColourRow extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
-            itemCount: _colours.length,
+
+            ///the first swatch is the absence of a colour, so the way back to
+            ///everything is a thing you can see and press, not a rule you have
+            ///to guess by pressing the active one again
+            itemCount: _colours.length + 1,
             separatorBuilder: (_, __) => const SizedBox(width: AppSpace.md),
             itemBuilder: (BuildContext context, int index) {
-              final (String name, Color colour) = _colours[index];
-              final bool active = name == selected;
-              return Semantics(
-                selected: active,
-                button: true,
-                label: name,
-                child: Pressable(
-                  onTap: () => onPick(name),
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: AppDuration.fast,
-                      width: active ? 34 : 30,
-                      height: active ? 34 : 30,
-                      decoration: BoxDecoration(
-                        color: colour,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color:
-                              active ? AppColors.accent : AppColors.lineStrong,
-                          width: active ? 2.5 : 1,
-                        ),
-                      ),
-                    ),
+              if (index == 0) {
+                return _Swatch(
+                  name: '',
+                  label: 'any colour',
+                  active: selected.isEmpty,
+                  onPick: onPick,
+
+                  ///every tone at once: the one swatch that is not a colour
+                  gradient: SweepGradient(
+                    colors: <Color>[
+                      for (final (String _, Color c) in _colours) c,
+                      _colours.first.$2,
+                    ],
                   ),
-                ),
+                );
+              }
+              final (String name, Color colour) = _colours[index - 1];
+              return _Swatch(
+                name: name,
+                label: name,
+                active: name == selected,
+                onPick: onPick,
+                colour: colour,
               );
             },
           ),
