@@ -34,9 +34,7 @@ class GlassPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surface.withValues(alpha: opacity),
             borderRadius: radius,
-            border: border
-                ? Border.all(color: AppColors.line, width: 1)
-                : null,
+            border: border ? Border.all(color: AppColors.line, width: 1) : null,
           ),
           child: Padding(padding: padding, child: child),
         ),
@@ -127,7 +125,9 @@ class SegmentedTabs extends StatelessWidget {
                 duration: AppDuration.base,
                 curve: AppDuration.curve,
                 alignment: Alignment(
-                  labels.length == 1 ? 0 : (index / (labels.length - 1)) * 2 - 1,
+                  labels.length == 1
+                      ? 0
+                      : (index / (labels.length - 1)) * 2 - 1,
                   0,
                 ),
                 child: Container(
@@ -151,13 +151,12 @@ class SegmentedTabs extends StatelessWidget {
                         onTap: () => onChanged(i),
                         child: AnimatedDefaultTextStyle(
                           duration: AppDuration.fast,
+
                           ///no trailing letter-spacing: it hangs after the last
                           ///glyph and pushes the pair off centre
                           style: AppText.label.copyWith(
                             letterSpacing: 0,
-                            color: active
-                                ? AppColors.text
-                                : AppColors.textDim,
+                            color: active ? AppColors.text : AppColors.textDim,
                           ),
                           child: Center(
                             child: Row(
@@ -271,6 +270,7 @@ class ScreenHeader extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Flexible(child: Text(title, style: AppText.display)),
+
                     ///the one spot of accent in the header
                     Padding(
                       padding: const EdgeInsets.only(left: 4, top: 6),

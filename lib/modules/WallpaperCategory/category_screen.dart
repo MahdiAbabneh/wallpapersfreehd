@@ -9,6 +9,7 @@ import '../../Layout/Home/cubit/cubit.dart';
 import '../../Layout/Home/cubit/states.dart';
 import '../../design/components.dart';
 import '../../design/gallery_grid.dart';
+import '../../ads/ads.dart';
 import '../../design/tokens.dart';
 import '../../models/categories.dart';
 import '../../models/category_covers.dart';
@@ -45,12 +46,21 @@ class _CategoryScreenState extends State<CategoryScreen> {
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const ItemSelectScreen()),
       );
+      _advertise();
     } else {
       cubit.searchSelectVideos(collection.query);
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const ItemSelectVideosScreen()),
       );
+      _advertise();
     }
+  }
+
+  ///a collection is fetching its first page behind the ad, so the wait pays
+  ///for itself instead of being spent on a spinner
+  void _advertise() {
+    AdInterstitialBottomSheet.showIfQuiet();
+    AdInterstitialBottomSheet.loadIntersitialAd();
   }
 
   @override
@@ -92,44 +102,44 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 color: AppColors.accent,
                 backgroundColor: AppColors.surfaceHigh,
                 child: AnimationLimiter(
-                child: GridView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpace.lg,
-                    0,
-                    AppSpace.lg,
-                    kNavBarInset + bottom + 50,
-                  ),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: AppSpace.md,
-                    crossAxisSpacing: AppSpace.md,
-                    childAspectRatio: 0.82,
-                  ),
-                  itemCount: kCollections.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final Collection collection = kCollections[index];
-                    return AnimationConfiguration.staggeredGrid(
-                      position: index,
-                      columnCount: 2,
-                      duration: AppDuration.slow,
-                      child: SlideAnimation(
-                        verticalOffset: 24,
-                        curve: AppDuration.curve,
-                        child: FadeInAnimation(
-                          child: _ThemeCard(
-                            collection: collection,
-                            onTap: () => _open(context, collection),
+                  child: GridView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpace.lg,
+                      0,
+                      AppSpace.lg,
+                      kNavBarInset + bottom + 50,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: AppSpace.md,
+                      crossAxisSpacing: AppSpace.md,
+                      childAspectRatio: 0.82,
+                    ),
+                    itemCount: kCollections.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final Collection collection = kCollections[index];
+                      return AnimationConfiguration.staggeredGrid(
+                        position: index,
+                        columnCount: 2,
+                        duration: AppDuration.slow,
+                        child: SlideAnimation(
+                          verticalOffset: 24,
+                          curve: AppDuration.curve,
+                          child: FadeInAnimation(
+                            child: _ThemeCard(
+                              collection: collection,
+                              onTap: () => _open(context, collection),
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
               ),
             ),
           ],

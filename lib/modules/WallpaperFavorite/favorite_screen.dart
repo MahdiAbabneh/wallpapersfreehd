@@ -8,6 +8,7 @@ import '../../design/components.dart';
 import '../../design/gallery_grid.dart';
 import '../../design/media_tile.dart';
 import '../../design/tokens.dart';
+import '../../ads/ads.dart';
 import '../Viewer/media_viewer.dart';
 
 /// Everything the reader kept, in the same masonry language as the gallery.
@@ -61,9 +62,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               child: items.isEmpty
                   ? StatusView(
                       icon: Icons.favorite_outline_rounded,
-                      title: photos
-                          ? 'Nothing saved yet'
-                          : 'No clips saved yet',
+                      title:
+                          photos ? 'Nothing saved yet' : 'No clips saved yet',
                       message:
                           'Tap the heart on anything you like and it waits for you here.',
                     )
@@ -88,53 +88,75 @@ class _FavoriteGrid extends StatelessWidget {
         photos ? cubit.favoriteImage : cubit.favoriteVideo;
     final double bottom = MediaQuery.paddingOf(context).bottom;
 
-    return MasonryGridView.count(
-      padding: EdgeInsets.fromLTRB(
-        AppSpace.lg,
-        0,
-        AppSpace.lg,
-        kNavBarInset + bottom + 50,
-      ),
+    ///laid out in bands like the gallery, so an ad card can take a whole row
+    ///between them instead of being squeezed into one column
+    return CustomScrollView(
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
-      crossAxisCount: 2,
-      mainAxisSpacing: AppSpace.md,
-      crossAxisSpacing: AppSpace.md,
-      itemCount: items.length,
-      itemBuilder: (BuildContext context, int index) {
-        final String url = items[index].toString();
-        final String poster = photos
-            ? url
-            : (index < cubit.favoriteVideoImage.length
-                ? cubit.favoriteVideoImage[index].toString()
-                : url);
+      slivers: <Widget>[
+        for (int band = 0;
+            band * NativeGridCard.every < items.length;
+            band++) ...<Widget>[
+          _band(context, items, band),
+          if ((band + 1) * NativeGridCard.every < items.length)
+            SliverToBoxAdapter(
+              child: NativeGridCard(key: ValueKey<int>(band)),
+            ),
+        ],
+        SliverToBoxAdapter(
+          child: SizedBox(height: kNavBarInset + bottom + 50),
+        ),
+      ],
+    );
+  }
 
-        return AspectRatio(
-          aspectRatio: index.isEven ? 0.72 : 0.64,
-          child: MediaTile(
-            imageUrl: poster,
-            heroTag: 'saved-$index-$url',
-            isVideo: !photos,
-            isFavorite: true,
-            onFavorite: () => cubit.insertToDatabase(url, poster, !photos),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => MediaViewer(
-                  heroTag: 'saved-$index-$url',
-                  previewUrl: poster,
-                  fullUrl: photos ? url : poster,
-                  videoUrl: photos ? null : url,
-                  isVideo: !photos,
-                  isFavorite: true,
-                  onFavorite: (_) =>
-                      cubit.insertToDatabase(url, poster, !photos),
+  Widget _band(BuildContext context, List<dynamic> items, int band) {
+    final int first = band * NativeGridCard.every;
+    final int count = (items.length - first).clamp(0, NativeGridCard.every);
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+      sliver: SliverMasonryGrid.count(
+        crossAxisCount: 2,
+        mainAxisSpacing: AppSpace.md,
+        crossAxisSpacing: AppSpace.md,
+        childCount: count,
+        itemBuilder: (BuildContext context, int i) {
+          final int index = first + i;
+          final String url = items[index].toString();
+          final String poster = photos
+              ? url
+              : (index < cubit.favoriteVideoImage.length
+                  ? cubit.favoriteVideoImage[index].toString()
+                  : url);
+
+          return AspectRatio(
+            aspectRatio: index.isEven ? 0.72 : 0.64,
+            child: MediaTile(
+              imageUrl: poster,
+              heroTag: 'saved-$index-$url',
+              isVideo: !photos,
+              isFavorite: true,
+              onFavorite: () => cubit.insertToDatabase(url, poster, !photos),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => MediaViewer(
+                    heroTag: 'saved-$index-$url',
+                    previewUrl: poster,
+                    fullUrl: photos ? url : poster,
+                    videoUrl: photos ? null : url,
+                    isVideo: !photos,
+                    isFavorite: true,
+                    onFavorite: (_) =>
+                        cubit.insertToDatabase(url, poster, !photos),
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

@@ -3,13 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../design/components.dart';
 import '../../design/tokens.dart';
-import '../../models/CustomBannerAd.dart';
+import '../../ads/ads.dart';
 import 'cubit/cubit.dart';
 import 'cubit/states.dart';
 
 ///Height the banner and the home indicator take at the bottom of the screen.
 double kBannerReserve(BuildContext context) =>
-    MediaQuery.paddingOf(context).bottom + 50;
+    MediaQuery.paddingOf(context).bottom + CustomBannerAd.height;
 
 /// The shell: a full-bleed canvas with the gallery behind a floating tab bar.
 class HomeLayout extends StatelessWidget {
@@ -121,9 +121,8 @@ class _TabBar extends StatelessWidget {
                     curve: AppDuration.curve,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: active
-                          ? AppColors.surfaceHigh
-                          : Colors.transparent,
+                      color:
+                          active ? AppColors.surfaceHigh : Colors.transparent,
                       borderRadius: AppRadius.chip,
                     ),
                     child: Row(
@@ -134,10 +133,9 @@ class _TabBar extends StatelessWidget {
                         Icon(
                           _items[i].icon,
                           size: 20,
-                          color: active
-                              ? AppColors.accent
-                              : AppColors.textDim,
+                          color: active ? AppColors.accent : AppColors.textDim,
                         ),
+
                         ///the label belongs to the selected tab only, so four
                         ///items fit without shrinking the type
                         ClipRect(

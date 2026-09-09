@@ -21,6 +21,7 @@ class EndlessScroll extends StatelessWidget {
     final Widget listener = NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         final metrics = notification.metrics;
+
         ///start fetching a screen early so the grid never stalls at the bottom
         if (metrics.axis == Axis.vertical &&
             metrics.pixels >= metrics.maxScrollExtent - 800) {
@@ -80,33 +81,32 @@ class PagedGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Widget grid = Scrollbar(
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            const SliverToBoxAdapter(child: SizedBox(height: 10)),
-            if (placeholder != null)
-              SliverFillRemaining(hasScrollBody: false, child: placeholder!)
-            else
-              SliverPadding(
-                padding: const EdgeInsets.all(5),
-                sliver: SliverGrid(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 10.0,
-                    crossAxisSpacing: 15.0,
-                    childAspectRatio: 1 / 1.50,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    itemBuilder,
-                    childCount: itemCount,
-                  ),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          const SliverToBoxAdapter(child: SizedBox(height: 10)),
+          if (placeholder != null)
+            SliverFillRemaining(hasScrollBody: false, child: placeholder!)
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(5),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 10.0,
+                  crossAxisSpacing: 15.0,
+                  childAspectRatio: 1 / 1.50,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  itemBuilder,
+                  childCount: itemCount,
                 ),
               ),
-            if (cursor != null)
-              SliverToBoxAdapter(child: LoadMoreFooter(cursor: cursor!)),
-          ],
-        ),
+            ),
+          if (cursor != null)
+            SliverToBoxAdapter(child: LoadMoreFooter(cursor: cursor!)),
+        ],
+      ),
     );
     if (onLoadMore == null && onRefresh == null) return grid;
     return EndlessScroll(

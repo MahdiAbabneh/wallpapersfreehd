@@ -78,6 +78,7 @@ class MediaTile extends StatelessWidget {
                   ),
                 ),
               ),
+
             ///nothing is written over a wallpaper: only a clip says how long it
             ///runs. The description still reaches screen readers through
             ///[caption], and the eye reads it in the viewer
@@ -154,7 +155,9 @@ class _FavoriteButton extends StatelessWidget {
               builder: (BuildContext context, double scale, Widget? child) =>
                   Transform.scale(scale: scale, child: child),
               child: Icon(
-                isFavorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+                isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_outline_rounded,
                 size: 22,
                 color: isFavorite ? AppColors.accent : Colors.white,
                 shadows: const <Shadow>[

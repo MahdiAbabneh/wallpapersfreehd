@@ -11,9 +11,9 @@ import '../../compat/fijk_compat.dart';
 import '../../compat/share_compat.dart';
 import '../../design/components.dart';
 import '../../design/tokens.dart';
+import '../../ads/ads.dart';
 import '../../models/download_sizes.dart';
 import 'save_sheet.dart';
-import '../../models/CustomInterstitialAd.dart';
 
 /// Full-screen viewer for one photograph or clip.
 ///
@@ -76,11 +76,20 @@ class _MediaViewerState extends State<MediaViewer> {
     if (widget.isVideo && widget.videoUrl != null) {
       _player.setDataSource(widget.videoUrl!, autoPlay: true);
     }
+
+    ///asked for while the reader is busy looking, so it is ready for the way
+    ///out rather than making them wait on it
+    AdInterstitialBottomSheet.loadIntersitialAd();
+    RewardedGate.load();
   }
 
   @override
   void dispose() {
     _player.dispose();
+
+    ///the one honest moment for a full page of advertising: the wallpaper has
+    ///been seen and closed, and nothing is half-done
+    AdInterstitialBottomSheet.maybeShow();
     super.dispose();
   }
 
@@ -115,7 +124,6 @@ class _MediaViewerState extends State<MediaViewer> {
               source: widget.sourceSize,
             ),
     );
-    AdInterstitialBottomSheet.loadIntersitialAd();
   }
 
   ///crop opens the platform editor over the size sheet and reports back
@@ -142,7 +150,6 @@ class _MediaViewerState extends State<MediaViewer> {
       sharePositionOrigin:
           box == null ? null : box.localToGlobal(Offset.zero) & box.size,
     );
-    AdInterstitialBottomSheet.loadIntersitialAd();
   }
 
   @override

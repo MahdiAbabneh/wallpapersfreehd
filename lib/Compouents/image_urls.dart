@@ -51,6 +51,7 @@ class _ImagePlaceholderState extends State<ImagePlaceholder>
     if (hex == null || hex.length != 6) return const Color(0xff262626);
     final int? value = int.tryParse(hex, radix: 16);
     if (value == null) return const Color(0xff262626);
+
     ///the tone is dimmed so the photo itself still arrives as the brighter step
     return Color.alphaBlend(Colors.black54, Color(0xff000000 | value));
   }

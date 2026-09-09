@@ -30,6 +30,7 @@ void main() {
     test('refuses explicit and suggestive terms, in both languages', () {
       for (final String q in <String>[
         'sexy', 'NUDE', 'bikini girls', 'lingerie', 'porn', 'جنس', 'عارية',
+
         ///the dictionary suggests grown forms of the word too
         'bikinied', 'sensuality', 'seductively',
       ]) {
@@ -41,6 +42,7 @@ void main() {
       for (final String q in <String>[
         'beach', 'grass', 'classic car', 'sunset', 'assam tea', 'brass band',
         'mountains', 'صحراء',
+
         ///these only look dangerous
         'striped shirt', 'stripes', 'button', 'breakfast',
       ]) {
@@ -55,7 +57,8 @@ void main() {
       expect(
         ContentFilter.blocksPhoto(_photo(
           alt: 'Elegant portrait of a woman in a studio',
-          url: 'https://www.pexels.com/photo/woman-posing-in-black-bra-19590840/',
+          url:
+              'https://www.pexels.com/photo/woman-posing-in-black-bra-19590840/',
         )),
         isTrue,
       );

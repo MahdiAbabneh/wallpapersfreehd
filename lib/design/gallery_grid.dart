@@ -8,6 +8,7 @@ import '../Layout/Home/cubit/cubit.dart';
 import '../models/curated_photos.dart';
 import '../models/curated_videos.dart';
 import '../models/download_sizes.dart';
+import '../ads/ads.dart';
 import '../models/page_cursor.dart';
 import '../modules/Viewer/media_viewer.dart';
 import 'media_tile.dart';
@@ -49,38 +50,58 @@ class _Masonry extends StatelessWidget {
           parent: AlwaysScrollableScrollPhysics(),
         ),
         slivers: <Widget>[
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
-            sliver: AnimationLimiter(
-              child: SliverMasonryGrid.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: AppSpace.md,
-                crossAxisSpacing: AppSpace.md,
-                childCount: itemCount,
-                itemBuilder: (BuildContext context, int index) {
-                  return AnimationConfiguration.staggeredGrid(
-                    position: index,
-                    columnCount: 2,
-                    duration: AppDuration.slow,
-                    child: SlideAnimation(
-                      verticalOffset: 28,
-                      curve: AppDuration.curve,
-                      child: FadeInAnimation(
-                        child: AspectRatio(
-                          aspectRatio: aspectOf(index),
-                          child: itemBuilder(context, index),
-                        ),
-                      ),
-                    ),
-                  );
-                },
+          ///the grid is laid out in bands with an ad card between them, rather
+          ///than one long grid with an ad squeezed into a single column: a
+          ///native card needs the whole width to be worth showing at all
+          for (int band = 0;
+              band * NativeGridCard.every < itemCount;
+              band++) ...<Widget>[
+            _band(band),
+            if ((band + 1) * NativeGridCard.every < itemCount)
+              SliverToBoxAdapter(
+                child: NativeGridCard(key: ValueKey<int>(band)),
               ),
-            ),
-          ),
+          ],
           SliverToBoxAdapter(
             child: _GalleryFooter(cursor: cursor, bottomInset: safe.bottom),
           ),
         ],
+      ),
+    );
+  }
+
+  ///one run of wallpapers between two ad cards
+  Widget _band(int band) {
+    final int first = band * NativeGridCard.every;
+    final int count = (itemCount - first).clamp(0, NativeGridCard.every);
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+      sliver: AnimationLimiter(
+        child: SliverMasonryGrid.count(
+          crossAxisCount: 2,
+          mainAxisSpacing: AppSpace.md,
+          crossAxisSpacing: AppSpace.md,
+          childCount: count,
+          itemBuilder: (BuildContext context, int index) {
+            final int i = first + index;
+            return AnimationConfiguration.staggeredGrid(
+              position: i,
+              columnCount: 2,
+              duration: AppDuration.slow,
+              child: SlideAnimation(
+                verticalOffset: 28,
+                curve: AppDuration.curve,
+                child: FadeInAnimation(
+                  child: AspectRatio(
+                    aspectRatio: aspectOf(i),
+                    child: itemBuilder(context, i),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -159,6 +180,7 @@ class PhotoMasonry extends StatelessWidget {
           imageUrl: url,
           heroTag: 'photo-${photo.id}',
           averageColor: photo.avgColor,
+
           ///not drawn on the tile any more; it is what a screen reader speaks
           caption: photo.alt,
           isFavorite: favorite,

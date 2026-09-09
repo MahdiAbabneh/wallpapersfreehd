@@ -7,22 +7,33 @@ import 'Layout/Home/cubit/cubit.dart';
 import 'Layout/Home/cubit/states.dart';
 import 'bloc_observer.dart';
 import 'design/theme.dart';
+import 'ads/ads.dart';
 import 'network/cache_helper.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
+
+  ///not awaited: initialisation can take up to thirty seconds on a bad
+  ///network, and the gallery must not wait on advertising to appear
+  MobileAds.instance.initialize().then((_) {
+    AppOpenAdManager.start();
+
+    ///an ad can now fire from Search or Themes before any wallpaper is opened,
+    ///so one is kept ready from the start rather than fetched on demand
+    AdInterstitialBottomSheet.loadIntersitialAd();
+    RewardedGate.load();
+  });
   Bloc.observer = AppBlocObserver();
   await CacheHelper.init();
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
       .then((_) {
     runApp(const MyApp());
-  });}
+  });
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +48,10 @@ class MyApp extends StatelessWidget {
               ..getCategoryData()
               ..getCategoryData2()),
       ],
-      child: BlocConsumer<HomeCubit,HomeStates>(
+      child: BlocConsumer<HomeCubit, HomeStates>(
         listener: (context, state) {},
         builder: (context, state) {
-          return  MaterialApp(
+          return MaterialApp(
             theme: buildStudioTheme(),
             themeMode: ThemeMode.dark,
             title: "Studio HD",

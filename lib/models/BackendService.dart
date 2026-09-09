@@ -14,8 +14,8 @@ class BackendService {
     List<Suggestion> suggestions = [];
     if (response.statusCode == 200) {
       Iterable json = convert.jsonDecode(response.body);
-      suggestions =
-      List<Suggestion>.from(json.map((model) => Suggestion.fromJson(model)));
+      suggestions = List<Suggestion>.from(
+          json.map((model) => Suggestion.fromJson(model)));
 
       print('Number of suggestion: ${suggestions.length}.');
     } else {

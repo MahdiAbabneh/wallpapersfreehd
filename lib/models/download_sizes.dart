@@ -9,6 +9,7 @@ class DownloadChoice {
     required this.subtitle,
     required this.url,
     this.pixels,
+    this.premium = false,
   });
 
   final String title;
@@ -18,8 +19,13 @@ class DownloadChoice {
   ///width x height, when it is known
   final Size? pixels;
 
-  String get dimensions =>
-      pixels == null ? '' : '${pixels!.width.round()} × ${pixels!.height.round()}';
+  ///the heaviest file on offer, traded for a short video the reader chooses to
+  ///watch; every other size stays free and instant
+  final bool premium;
+
+  String get dimensions => pixels == null
+      ? ''
+      : '${pixels!.width.round()} × ${pixels!.height.round()}';
 
   ///"4.4 MB" reads better than a byte count nobody can parse at a glance
   static String weight(int bytes) {
@@ -40,15 +46,13 @@ class DownloadSizes {
 
   static String sized(String url, int width, int height) {
     final Uri uri = Uri.parse(url);
-    return uri
-        .replace(queryParameters: <String, String>{
-          'auto': 'compress',
-          'cs': 'tinysrgb',
-          'fit': 'crop',
-          'w': '$width',
-          'h': '$height',
-        })
-        .toString();
+    return uri.replace(queryParameters: <String, String>{
+      'auto': 'compress',
+      'cs': 'tinysrgb',
+      'fit': 'crop',
+      'w': '$width',
+      'h': '$height',
+    }).toString();
   }
 
   /// [screen] is the device's real pixel size, [source] the photograph's own.
@@ -91,6 +95,7 @@ class DownloadSizes {
       subtitle: 'The full picture, exactly as it was taken',
       url: originalUrl,
       pixels: source.width > 0 ? source : null,
+      premium: true,
     ));
 
     return choices;
@@ -117,6 +122,12 @@ extension VideoDownloadSizes on List<VideoFile> {
 
     final VideoFile best = unique.bestForPhone;
 
+    ///the one heaviest rendition, and only when it is genuinely large — on a
+    ///clip that tops out at 720p there is nothing worth asking for
+    final VideoFile largest = unique.first;
+    final int largestLong =
+        largest.width > largest.height ? largest.width : largest.height;
+
     return unique.map((VideoFile f) {
       final int long = f.width > f.height ? f.width : f.height;
       final String name = switch (long) {
@@ -135,6 +146,8 @@ extension VideoDownloadSizes on List<VideoFile> {
                 : 'Lighter, quicker to save'),
         url: f.link,
         pixels: Size(f.width.toDouble(), f.height.toDouble()),
+        premium:
+            identical(f, largest) && !identical(f, best) && largestLong >= 2560,
       );
     }).toList();
   }

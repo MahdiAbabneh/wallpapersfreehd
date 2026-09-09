@@ -45,5 +45,3 @@ class WallpaperSearchSelectImageLoading extends HomeStates {}
 class WallpaperSearchSelectImageSuccess extends HomeStates {}
 
 class WallpaperSearchSelectImageError extends HomeStates {}
-
-

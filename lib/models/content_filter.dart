@@ -36,8 +36,7 @@ class ContentFilter {
   static bool blocksQuery(String query) => _hit(query);
 
   ///a picture whose own description gives it away
-  static bool blocksPhoto(Photos photo) =>
-      _hit(photo.alt) || _hit(photo.url);
+  static bool blocksPhoto(Photos photo) => _hit(photo.alt) || _hit(photo.url);
 
   ///Pexels labels its clips with tags, and the page url carries them too
   static bool blocksVideo(Video video) =>
@@ -70,6 +69,7 @@ class ContentFilter {
         if (lower.contains(term)) return true;
         continue;
       }
+
       ///whole words only, so "grass", "classic" and "brass" stay innocent
       if (words.contains(term)) return true;
       if (!term.endsWith('s') && words.contains('${term}s')) return true;
@@ -78,7 +78,8 @@ class ContentFilter {
       ///"sensuality" — while short ones never do, or "butt" would take
       ///"button" and "bra" would take "brass"
       if (term.length >= 5 &&
-          words.any((String w) => w.length > term.length && w.startsWith(term))) {
+          words.any(
+              (String w) => w.length > term.length && w.startsWith(term))) {
         return true;
       }
     }

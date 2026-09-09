@@ -20,38 +20,34 @@ import 'package:wallpaper_app/modules/WallpaperSearch/search_screen.dart';
 import 'package:wallpaper_app/network/cache_helper.dart';
 import 'package:wallpaper_app/network/dio_helper.dart';
 
-
 class HomeCubit extends Cubit<HomeStates> {
   HomeCubit() : super(HomeInitialState());
 
   static HomeCubit get(context) => BlocProvider.of(context);
 
-  List<Widget> screen=const
-  [
+  List<Widget> screen = const [
     HomeScreen(),
     FavoriteScreen(),
     CategoryScreen(),
     SearchScreen(),
   ];
 
-
-
-  List<BottomNavigationBarItem>item=const
-  [
+  List<BottomNavigationBarItem> item = const [
     BottomNavigationBarItem(icon: Icon(Icons.cabin_sharp), label: "Home"),
-    BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: "Favorite"),
-    BottomNavigationBarItem(icon: Icon(Icons.collections_outlined,), label: "Category"),
+    BottomNavigationBarItem(
+        icon: Icon(Icons.favorite_border), label: "Favorite"),
+    BottomNavigationBarItem(
+        icon: Icon(
+          Icons.collections_outlined,
+        ),
+        label: "Category"),
     BottomNavigationBarItem(icon: Icon(Icons.search_sharp), label: "Search"),
-
   ];
 
-  int indexScreen=0;
-  void selectItem(value)
-  {
-    indexScreen=value;
+  int indexScreen = 0;
+  void selectItem(value) {
+    indexScreen = value;
     emit(WallpaperSelectState());
-
-
   }
 
   CuratedPhotos? curatedPhotos;
@@ -60,6 +56,7 @@ class HomeCubit extends Cubit<HomeStates> {
   ///Pexels serves only 12 pages of popular videos, any page past that
   ///comes back with an empty list, unlike curated photos which go past 180
   static const int maxVideoPage = 12;
+
   ///every search endpoint stops after 480 results, that is 6 pages of 80
   static const int maxSearchPage = 6;
   static const int maxCuratedPage = 180;
@@ -82,9 +79,11 @@ class HomeCubit extends Cubit<HomeStates> {
       PageCursor(maxPage: maxCuratedPage, perPage: 40);
 
   ///show image in Home Screen
-  Future<void> getHomeData({bool more = false}) async{
+  Future<void> getHomeData({bool more = false}) async {
     if (more) {
-      if (homePhotoCursor.loading || homePhotoCursor.ended || curatedPhotos == null) return;
+      if (homePhotoCursor.loading ||
+          homePhotoCursor.ended ||
+          curatedPhotos == null) return;
       homePhotoCursor.loading = true;
       emit(WallpaperLoadMoreLoading());
     } else {
@@ -104,16 +103,17 @@ class HomeCubit extends Cubit<HomeStates> {
       } else {
         curatedPhotos = data;
       }
-      if (data.photos.isEmpty || !homePhotoCursor.advance()) homePhotoCursor.ended = true;
+      if (data.photos.isEmpty || !homePhotoCursor.advance())
+        homePhotoCursor.ended = true;
       homePhotoCursor.loading = false;
       emit(WallpaperGetDataSuccess());
     } catch (error) {
       homePhotoCursor.loading = false;
+
       ///a failed extra page must not wipe what the user is already looking at
       emit(more ? WallpaperGetDataSuccess() : WallpaperGetDataError());
     }
   }
-
 
   ///Nothing suggestive reaches a grid, whatever was searched: the provider has
   ///no safe-search switch, so each result is read and dropped here.
@@ -141,9 +141,11 @@ class HomeCubit extends Cubit<HomeStates> {
   final PageCursor homeVideoCursor =
       PageCursor(maxPage: maxVideoPage, perPage: 40);
 
-  Future<void> getHomeData2({bool more = false}) async{
+  Future<void> getHomeData2({bool more = false}) async {
     if (more) {
-      if (homeVideoCursor.loading || homeVideoCursor.ended || curatedVideo == null) return;
+      if (homeVideoCursor.loading ||
+          homeVideoCursor.ended ||
+          curatedVideo == null) return;
       homeVideoCursor.loading = true;
       emit(WallpaperLoadMoreLoading());
     } else {
@@ -154,7 +156,8 @@ class HomeCubit extends Cubit<HomeStates> {
     }
     try {
       final value = await DioHelper.getData(
-        url: 'https://api.pexels.com/videos/popular/?page=${homeVideoCursor.page}'
+        url:
+            'https://api.pexels.com/videos/popular/?page=${homeVideoCursor.page}'
             '&per_page=${homeVideoCursor.perPage}',
       );
       final VideoModel data = _screenVideos(VideoModel.fromJson(value.data));
@@ -163,7 +166,8 @@ class HomeCubit extends Cubit<HomeStates> {
       } else {
         curatedVideo = data;
       }
-      if (data.videos.isEmpty || !homeVideoCursor.advance()) homeVideoCursor.ended = true;
+      if (data.videos.isEmpty || !homeVideoCursor.advance())
+        homeVideoCursor.ended = true;
       homeVideoCursor.loading = false;
       emit(WallpaperGetDataSuccess());
     } catch (error) {
@@ -173,8 +177,8 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   ///Save image in gallery
-  String type="original";
-  String file="original";
+  String type = "original";
+  String file = "original";
   Future<void> saveImageInGallery(String image) async {
     emit(WallpaperImageInGalleryLoading());
     try {
@@ -205,8 +209,6 @@ class HomeCubit extends Cubit<HomeStates> {
     }
   }
 
-
-
   CuratedPhotos? curatedSearchPhotos;
   final PageCursor searchPhotoCursor =
       PageCursor(maxPage: maxSearchPage, perPage: 80);
@@ -217,9 +219,12 @@ class HomeCubit extends Cubit<HomeStates> {
   ///keeps it
   String _searchPhotoColor = "";
 
-  Future<void>  searchImages(String? text, {bool more = false, String? color})async {
+  Future<void> searchImages(String? text,
+      {bool more = false, String? color}) async {
     if (more) {
-      if (searchPhotoCursor.loading || searchPhotoCursor.ended || curatedSearchPhotos == null) return;
+      if (searchPhotoCursor.loading ||
+          searchPhotoCursor.ended ||
+          curatedSearchPhotos == null) return;
       searchPhotoCursor.loading = true;
       emit(WallpaperLoadMoreLoading());
     } else {
@@ -246,7 +251,8 @@ class HomeCubit extends Cubit<HomeStates> {
       } else {
         curatedSearchPhotos = data;
       }
-      if (data.photos.isEmpty || !searchPhotoCursor.advance()) searchPhotoCursor.ended = true;
+      if (data.photos.isEmpty || !searchPhotoCursor.advance())
+        searchPhotoCursor.ended = true;
       searchPhotoCursor.loading = false;
       emit(WallpaperSearchImageSuccess());
     } catch (error) {
@@ -261,9 +267,11 @@ class HomeCubit extends Cubit<HomeStates> {
       PageCursor(maxPage: maxSearchPage, perPage: 80);
   String _searchVideoQuery = "";
 
-  Future<void>  searchVideo(String? text, {bool more = false})async {
+  Future<void> searchVideo(String? text, {bool more = false}) async {
     if (more) {
-      if (searchVideoCursor.loading || searchVideoCursor.ended || curatedSearchVideo == null) return;
+      if (searchVideoCursor.loading ||
+          searchVideoCursor.ended ||
+          curatedSearchVideo == null) return;
       searchVideoCursor.loading = true;
       emit(WallpaperLoadMoreLoading());
     } else {
@@ -284,12 +292,15 @@ class HomeCubit extends Cubit<HomeStates> {
       } else {
         curatedSearchVideo = data;
       }
-      if (data.videos.isEmpty || !searchVideoCursor.advance()) searchVideoCursor.ended = true;
+      if (data.videos.isEmpty || !searchVideoCursor.advance())
+        searchVideoCursor.ended = true;
       searchVideoCursor.loading = false;
       emit(WallpaperSearchImageSuccessVideo());
     } catch (error) {
       searchVideoCursor.loading = false;
-      emit(more ? WallpaperSearchImageSuccessVideo() : WallpaperSearchImageError());
+      emit(more
+          ? WallpaperSearchImageSuccessVideo()
+          : WallpaperSearchImageError());
     }
   }
 
@@ -299,9 +310,11 @@ class HomeCubit extends Cubit<HomeStates> {
   String _selectPhotoQuery = "";
 
   ///a category is browsed, not searched, so it opens on a random page
-  Future<void>  searchSelectImages(String? text, {bool more = false})async {
+  Future<void> searchSelectImages(String? text, {bool more = false}) async {
     if (more) {
-      if (selectPhotoCursor.loading || selectPhotoCursor.ended || curatedSearchSelectPhotos == null) return;
+      if (selectPhotoCursor.loading ||
+          selectPhotoCursor.ended ||
+          curatedSearchSelectPhotos == null) return;
       selectPhotoCursor.loading = true;
       emit(WallpaperLoadMoreLoading());
     } else {
@@ -319,6 +332,7 @@ class HomeCubit extends Cubit<HomeStates> {
             '&page=${selectPhotoCursor.page}&per_page=${selectPhotoCursor.perPage}',
       );
       CuratedPhotos data = _screen(CuratedPhotos.fromJson(value.data));
+
       ///a narrow category can be shorter than the random page we picked
       if (!more && data.photos.isEmpty && selectPhotoCursor.page != 1) {
         selectPhotoCursor.reset(1);
@@ -335,12 +349,15 @@ class HomeCubit extends Cubit<HomeStates> {
       } else {
         curatedSearchSelectPhotos = data;
       }
-      if (data.photos.isEmpty || !selectPhotoCursor.advance()) selectPhotoCursor.ended = true;
+      if (data.photos.isEmpty || !selectPhotoCursor.advance())
+        selectPhotoCursor.ended = true;
       selectPhotoCursor.loading = false;
       emit(WallpaperSearchSelectImageSuccess());
     } catch (error) {
       selectPhotoCursor.loading = false;
-      emit(more ? WallpaperSearchSelectImageSuccess() : WallpaperSearchSelectImageError());
+      emit(more
+          ? WallpaperSearchSelectImageSuccess()
+          : WallpaperSearchSelectImageError());
     }
   }
 
@@ -349,9 +366,11 @@ class HomeCubit extends Cubit<HomeStates> {
       PageCursor(maxPage: maxSearchPage, perPage: 80);
   String _selectVideoQuery = "";
 
-  Future<void>  searchSelectVideos(String? text, {bool more = false})async {
+  Future<void> searchSelectVideos(String? text, {bool more = false}) async {
     if (more) {
-      if (selectVideoCursor.loading || selectVideoCursor.ended || curatedSearchSelectVideos == null) return;
+      if (selectVideoCursor.loading ||
+          selectVideoCursor.ended ||
+          curatedSearchSelectVideos == null) return;
       selectVideoCursor.loading = true;
       emit(WallpaperLoadMoreLoading());
     } else {
@@ -380,79 +399,73 @@ class HomeCubit extends Cubit<HomeStates> {
       } else {
         curatedSearchSelectVideos = data;
       }
-      if (data.videos.isEmpty || !selectVideoCursor.advance()) selectVideoCursor.ended = true;
+      if (data.videos.isEmpty || !selectVideoCursor.advance())
+        selectVideoCursor.ended = true;
       selectVideoCursor.loading = false;
       emit(WallpaperSearchSelectImageSuccess());
     } catch (error) {
       selectVideoCursor.loading = false;
-      emit(more ? WallpaperSearchSelectImageSuccess() : WallpaperSearchSelectImageError());
+      emit(more
+          ? WallpaperSearchSelectImageSuccess()
+          : WallpaperSearchSelectImageError());
     }
   }
 
   Database? dbImage;
   Database? dbVideos;
 
-
   ///create DB
   Future<void> createDatabase() async {
     dbImage = await openDatabase('userImages.db', version: 1,
         onCreate: (database, version) async {
-          database.execute(
-              'CREATE TABLE FavoriteImage (id INTEGER PRIMARY KEY, url TEXT)');
-        }, onOpen: (database) async {
-          getDataFromDatabase(database,false);
-        });
+      database.execute(
+          'CREATE TABLE FavoriteImage (id INTEGER PRIMARY KEY, url TEXT)');
+    }, onOpen: (database) async {
+      getDataFromDatabase(database, false);
+    });
   }
+
   ///create DB
   Future<void> createDatabase2() async {
     dbVideos = await openDatabase('userVideos.db', version: 1,
         onCreate: (database, version) async {
-          database.execute(
-              'CREATE TABLE FavoriteVideo (id INTEGER PRIMARY KEY, url TEXT,urlImage TEXT)');
-        }, onOpen: (database) async {
-          getDataFromDatabase(database,true);
-        });
+      database.execute(
+          'CREATE TABLE FavoriteVideo (id INTEGER PRIMARY KEY, url TEXT,urlImage TEXT)');
+    }, onOpen: (database) async {
+      getDataFromDatabase(database, true);
+    });
   }
-
 
   List favoriteImage = [];
   List favoriteVideo = [];
   List favoriteVideoImage = [];
 
-
-
   ///show favorite Image
-  Future<void> getDataFromDatabase(database,bool isVideos) async {
-    if(isVideos)
-      {
-
-        favoriteVideo = await database.rawQuery('SELECT * FROM FavoriteVideo');
-        favoriteVideo= favoriteVideo.map((e) => e["url"]).toList();
-        favoriteVideo = favoriteVideo.reversed.toList();
-        favoriteVideoImage = await database.rawQuery('SELECT * FROM FavoriteVideo');
-        favoriteVideoImage= favoriteVideoImage.map((e) => e["urlImage"]).toList();
-        favoriteVideoImage = favoriteVideoImage.reversed.toList();
-      }
-    else{
+  Future<void> getDataFromDatabase(database, bool isVideos) async {
+    if (isVideos) {
+      favoriteVideo = await database.rawQuery('SELECT * FROM FavoriteVideo');
+      favoriteVideo = favoriteVideo.map((e) => e["url"]).toList();
+      favoriteVideo = favoriteVideo.reversed.toList();
+      favoriteVideoImage =
+          await database.rawQuery('SELECT * FROM FavoriteVideo');
+      favoriteVideoImage =
+          favoriteVideoImage.map((e) => e["urlImage"]).toList();
+      favoriteVideoImage = favoriteVideoImage.reversed.toList();
+    } else {
       favoriteImage = await database.rawQuery('SELECT url FROM FavoriteImage');
-      favoriteImage= favoriteImage.map((e) => e["url"]).toList();
+      favoriteImage = favoriteImage.map((e) => e["url"]).toList();
       favoriteImage = favoriteImage.reversed.toList();
-
     }
-
 
     emit(WallpaperGetDataFromDB());
   }
 
   ///add favorite Image or Remove
-  Future<void> insertToDatabase(String url,urlImage,bool isVideos) async {
-    if(isVideos)
-    {
-      if(favoriteVideo.contains(url))
-      {
-        deleteFromDatabase(url,urlImage,isVideos);
-      }
-      else {
+  Future<void> insertToDatabase(String url, urlImage, bool isVideos) async {
+    if (isVideos) {
+      if (favoriteVideo.contains(url)) {
+        deleteFromDatabase(url, urlImage, isVideos);
+      } else {
         await dbVideos!.transaction((txn) async {
           await txn
               .rawInsert('INSERT INTO FavoriteVideo(url) VALUES("$url")')
@@ -464,24 +477,20 @@ class HomeCubit extends Cubit<HomeStates> {
         });
         await dbVideos!.transaction((txn) async {
           await txn
-              .rawInsert('UPDATE FavoriteVideo SET urlImage="$urlImage" WHERE url="$url"')
+              .rawInsert(
+                  'UPDATE FavoriteVideo SET urlImage="$urlImage" WHERE url="$url"')
               .then((value) {
             if (kDebugMode) {
               print('inserted $urlImage with id $value');
             }
           });
         });
-
       }
-      getDataFromDatabase(dbVideos,isVideos);
-
-    }
-    else{
-      if(favoriteImage.contains(url))
-      {
-        deleteFromDatabase(url,'',isVideos);
-      }
-      else {
+      getDataFromDatabase(dbVideos, isVideos);
+    } else {
+      if (favoriteImage.contains(url)) {
+        deleteFromDatabase(url, '', isVideos);
+      } else {
         await dbImage!.transaction((txn) async {
           await txn
               .rawInsert('INSERT INTO FavoriteImage(url) VALUES("$url")')
@@ -492,27 +501,25 @@ class HomeCubit extends Cubit<HomeStates> {
           });
         });
       }
-      getDataFromDatabase(dbImage,isVideos);
-
+      getDataFromDatabase(dbImage, isVideos);
     }
-
   }
 
   ///Remove From favorite
-  Future<void> deleteFromDatabase(String url,String urlImage,bool isVideos ) async {
-    if(isVideos)
-    {
-      await dbVideos!.rawDelete('DELETE FROM FavoriteVideo WHERE url = ?', [url]);
-      await dbVideos!.rawDelete('DELETE FROM FavoriteVideo WHERE urlImage = ?', [urlImage]);
+  Future<void> deleteFromDatabase(
+      String url, String urlImage, bool isVideos) async {
+    if (isVideos) {
+      await dbVideos!
+          .rawDelete('DELETE FROM FavoriteVideo WHERE url = ?', [url]);
+      await dbVideos!.rawDelete(
+          'DELETE FROM FavoriteVideo WHERE urlImage = ?', [urlImage]);
 
-      getDataFromDatabase(dbVideos,isVideos);
+      getDataFromDatabase(dbVideos, isVideos);
+    } else {
+      await dbImage!
+          .rawDelete('DELETE FROM FavoriteImage WHERE url = ?', [url]);
+      getDataFromDatabase(dbImage, isVideos);
     }
-    else{
-      await dbImage!.rawDelete('DELETE FROM FavoriteImage WHERE url = ?', [url]);
-      getDataFromDatabase(dbImage,isVideos);
-
-    }
-
   }
 
   CroppedFile? croppedImageFile;
@@ -520,26 +527,28 @@ class HomeCubit extends Cubit<HomeStates> {
     emit(WallpaperCroppedImageLoading());
     var file = await DefaultCacheManager().getSingleFile(editImage);
     croppedImageFile = await ImageCropper().cropImage(
-      compressFormat: selectedTypeImage=="PNG"?ImageCompressFormat.png:ImageCompressFormat.jpg,
+        compressFormat: selectedTypeImage == "PNG"
+            ? ImageCompressFormat.png
+            : ImageCompressFormat.jpg,
         sourcePath: file.path,
-      uiSettings: [
-      AndroidUiSettings(
-      toolbarTitle: 'Cropper',
-      toolbarColor: Colors.deepOrange,
-      toolbarWidgetColor: Colors.white,
-      aspectRatioPresets: [
-        CropAspectRatioPreset.original,
-        CropAspectRatioPreset.square,
-      ],
-    ),
-    IOSUiSettings(
-    title: 'Cropper',
-    aspectRatioPresets: [
-    CropAspectRatioPreset.original,
-    CropAspectRatioPreset.square,
-    ],
-    )
-    ]).then((value) {
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Cropper',
+            toolbarColor: Colors.deepOrange,
+            toolbarWidgetColor: Colors.white,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Cropper',
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+            ],
+          )
+        ]).then((value) {
       saveImageInGallery(value!.path);
       emit(WallpaperCroppedImageSuccess());
     }).catchError((error) {
@@ -554,16 +563,15 @@ class HomeCubit extends Cubit<HomeStates> {
 
   CuratedPhotos? curatedPhotosCategory;
 
-
   ///show image in Home Screen
-  Future<void> getCategoryData() async{
-    curatedPhotosCategory=null;
+  Future<void> getCategoryData() async {
+    curatedPhotosCategory = null;
     int randomNumber = generateRandomNumber(1, 180);
     emit(WallpaperGetDataCategoryLoading());
-    await  DioHelper.getData(
+    await DioHelper.getData(
       url: 'https://api.pexels.com/v1/curated/?page=$randomNumber&per_page=40',
     ).then((value) {
-      curatedPhotosCategory=_screen(CuratedPhotos.fromJson(value.data));
+      curatedPhotosCategory = _screen(CuratedPhotos.fromJson(value.data));
       emit(WallpaperGetDataCategorySuccess());
     }).catchError((error) {
       print(error.toString());
@@ -572,25 +580,19 @@ class HomeCubit extends Cubit<HomeStates> {
   }
 
   VideoModel? curatedVideoCategory;
-  Future<void> getCategoryData2() async{
-    curatedVideoCategory=null;
+  Future<void> getCategoryData2() async {
+    curatedVideoCategory = null;
     int randomNumber = generateRandomNumber(1, maxVideoPage);
     emit(WallpaperGetDataCategoryLoading());
-    await  DioHelper.getData(
-      url: 'https://api.pexels.com/videos/popular/?page=$randomNumber&per_page=40',
+    await DioHelper.getData(
+      url:
+          'https://api.pexels.com/videos/popular/?page=$randomNumber&per_page=40',
     ).then((value) {
-      curatedVideoCategory=_screenVideos(VideoModel.fromJson(value.data));
+      curatedVideoCategory = _screenVideos(VideoModel.fromJson(value.data));
       emit(WallpaperGetDataCategorySuccess());
     }).catchError((error) {
       print(error.toString());
       emit(WallpaperGetDataCategoryError());
     });
   }
-
-
-
-
 }
-
-
-

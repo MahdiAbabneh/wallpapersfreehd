@@ -11,6 +11,7 @@ import '../../design/gallery_grid.dart';
 import '../../design/tokens.dart';
 import '../../models/BackendService.dart';
 import '../../models/categories.dart';
+import '../../ads/ads.dart';
 import '../../models/content_filter.dart';
 import '../../network/cache_helper.dart';
 
@@ -156,6 +157,11 @@ class _SearchScreenState extends State<SearchScreen> {
       ///the video endpoint has no colour filter, so the word carries it
       cubit.searchVideo(_colour.isEmpty ? _term : '$_colour $_term'.trim());
     }
+
+    ///the request is already in flight, so the ad covers the wait rather than
+    ///the answer: by the time it closes the results are underneath it
+    AdInterstitialBottomSheet.showIfQuiet();
+    AdInterstitialBottomSheet.loadIntersitialAd();
   }
 
   ///a colour narrows what is already on screen, or starts a search of its own
@@ -295,6 +301,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final int count = photos
         ? (cubit.curatedSearchPhotos?.photos.length ?? 0)
         : (cubit.curatedSearchVideo?.videos.length ?? 0);
+
     ///a colour-only search is already named after its colour; saying it twice
     ///reads as a mistake
     final String colour =

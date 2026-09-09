@@ -45,6 +45,7 @@ class CategoryCovers {
         final String url = photos.first['src']['portrait']?.toString() ?? '';
         if (url.isEmpty) continue;
         found[category.name] = url;
+
         ///publish as they arrive rather than making the shelf wait for all twelve
         covers.value = Map<String, String>.of(found);
       } catch (_) {

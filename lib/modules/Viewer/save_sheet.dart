@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design/components.dart';
 import '../../design/tokens.dart';
+import '../../ads/ads.dart';
 import '../../models/download_sizes.dart';
 import '../../models/wallpaper_service.dart';
 
@@ -50,6 +51,7 @@ class SaveSheet extends StatefulWidget {
 
 class _SaveSheetState extends State<SaveSheet> {
   DownloadChoice? _running;
+  bool _waiting = false;
   double _progress = 0;
   SaveOutcome? _outcome;
 
@@ -74,6 +76,18 @@ class _SaveSheetState extends State<SaveSheet> {
   }
 
   Future<void> _start(DownloadChoice choice) async {
+    ///the heaviest file asks for a short video first; the gate lets everything
+    ///through when there is no ad to show, so a fill failure never costs the
+    ///reader their wallpaper
+    final bool paidWithAVideo = choice.premium && !RewardedGate.unlocked;
+    if (paidWithAVideo) {
+      setState(() => _waiting = true);
+      final bool allowed = await RewardedGate.unlock();
+      if (!mounted) return;
+      setState(() => _waiting = false);
+      if (!allowed) return;
+    }
+
     setState(() {
       _running = choice;
       _progress = 0;
@@ -98,6 +112,13 @@ class _SaveSheetState extends State<SaveSheet> {
     if (outcome.status == SaveStatus.done) {
       await Future<void>.delayed(const Duration(milliseconds: 1100));
       if (mounted) Navigator.of(context).maybePop();
+
+      ///the file is in the gallery and nothing is half-done, so this is a
+      ///transition rather than an interruption — unless the reader just sat
+      ///through a video to earn this file, in which case charging them a
+      ///second ad for having paid is the one thing that would feel like a
+      ///cheat
+      if (!paidWithAVideo) AdInterstitialBottomSheet.showIfQuiet();
     }
   }
 
@@ -119,7 +140,9 @@ class _SaveSheetState extends State<SaveSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (_outcome != null)
+          if (_waiting)
+            const _Waiting()
+          else if (_outcome != null)
             _Result(
               ok: _outcome!.status == SaveStatus.done,
               message: _outcome!.status == SaveStatus.done
@@ -139,6 +162,9 @@ class _SaveSheetState extends State<SaveSheet> {
               _Option(
                 choice: choice,
                 bytes: _weights[choice.url],
+
+                ///said plainly before the tap, never sprung afterwards
+                locked: choice.premium && !RewardedGate.unlocked,
                 onTap: () => _start(choice),
               ),
             if (widget.onAdjust != null) ...<Widget>[
@@ -211,16 +237,49 @@ class _SheetShell extends StatelessWidget {
   }
 }
 
+/// The pause between asking for the big file and the ad appearing.
+class _Waiting extends StatelessWidget {
+  const _Waiting();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
+      child: Row(
+        children: <Widget>[
+          const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.accent,
+            ),
+          ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child:
+                Text('One moment', style: AppText.label.copyWith(fontSize: 15)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Option extends StatelessWidget {
   const _Option({
     required this.choice,
     required this.onTap,
     this.bytes,
     this.icon,
+    this.locked = false,
   });
 
   final DownloadChoice choice;
   final VoidCallback onTap;
+
+  ///this row costs a short video
+  final bool locked;
 
   ///null until the CDN answers
   final int? bytes;
@@ -278,16 +337,23 @@ class _Option extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(choice.subtitle, style: AppText.caption),
+                  Text(
+                    locked
+                        ? '${choice.subtitle} · after a short video'
+                        : choice.subtitle,
+                    style: AppText.caption,
+                  ),
                 ],
               ),
             ),
             Icon(
-              icon == null
-                  ? Icons.arrow_downward_rounded
-                  : Icons.arrow_forward_ios_rounded,
-              size: icon == null ? 16 : 13,
-              color: AppColors.textFaint,
+              locked
+                  ? Icons.play_circle_outline_rounded
+                  : (icon == null
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_forward_ios_rounded),
+              size: icon == null && !locked ? 16 : (locked ? 19 : 13),
+              color: locked ? AppColors.accent : AppColors.textFaint,
             ),
           ],
         ),
