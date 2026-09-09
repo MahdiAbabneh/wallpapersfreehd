@@ -99,68 +99,74 @@ class _TabBar extends StatelessWidget {
         AppSpace.xxl,
         AppSpace.md,
       ),
-      child: GlassPanel(
-        radius: AppRadius.chip,
-        opacity: 0.62,
-        blur: 30,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List<Widget>.generate(_items.length, (int i) {
-            final bool active = i == index;
-            return Expanded(
-              child: Semantics(
-                selected: active,
-                button: true,
-                label: _items[i].label,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onChanged(i),
-                  child: AnimatedContainer(
-                    duration: AppDuration.base,
-                    curve: AppDuration.curve,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color:
-                          active ? AppColors.surfaceHigh : Colors.transparent,
-                      borderRadius: AppRadius.chip,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(
-                          _items[i].icon,
-                          size: 20,
-                          color: active ? AppColors.accent : AppColors.textDim,
-                        ),
+      child: ConstrainedBox(
+        ///a bar the width of an iPad is a stripe, not a control; it stops
+        ///growing once it is comfortably thumb-sized
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: GlassPanel(
+          radius: AppRadius.chip,
+          opacity: 0.62,
+          blur: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List<Widget>.generate(_items.length, (int i) {
+              final bool active = i == index;
+              return Expanded(
+                child: Semantics(
+                  selected: active,
+                  button: true,
+                  label: _items[i].label,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onChanged(i),
+                    child: AnimatedContainer(
+                      duration: AppDuration.base,
+                      curve: AppDuration.curve,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color:
+                            active ? AppColors.surfaceHigh : Colors.transparent,
+                        borderRadius: AppRadius.chip,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(
+                            _items[i].icon,
+                            size: 20,
+                            color:
+                                active ? AppColors.accent : AppColors.textDim,
+                          ),
 
-                        ///the label belongs to the selected tab only, so four
-                        ///items fit without shrinking the type
-                        ClipRect(
-                          child: AnimatedAlign(
-                            duration: AppDuration.base,
-                            curve: AppDuration.curve,
-                            alignment: Alignment.centerLeft,
-                            widthFactor: active ? 1 : 0,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: Text(
-                                _items[i].label,
-                                style: AppText.label
-                                    .copyWith(fontSize: 12, letterSpacing: 0),
+                          ///the label belongs to the selected tab only, so four
+                          ///items fit without shrinking the type
+                          ClipRect(
+                            child: AnimatedAlign(
+                              duration: AppDuration.base,
+                              curve: AppDuration.curve,
+                              alignment: Alignment.centerLeft,
+                              widthFactor: active ? 1 : 0,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 6),
+                                child: Text(
+                                  _items[i].label,
+                                  style: AppText.label
+                                      .copyWith(fontSize: 12, letterSpacing: 0),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );

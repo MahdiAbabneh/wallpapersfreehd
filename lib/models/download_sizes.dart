@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'curated_videos.dart';
@@ -55,19 +56,46 @@ class DownloadSizes {
     }).toString();
   }
 
+  /// The largest rectangle with the phone's own proportions that this
+  /// photograph can actually fill.
+  ///
+  /// Asking the CDN for more pixels than the source holds does not fail — it
+  /// quietly returns something shorter and of a different shape. That is how
+  /// "Your screen 1206 × 2622" arrived as 1206 × 2397: the right width, the
+  /// wrong shape, and a promise the row had already made. So the request is
+  /// trimmed to what the picture can honour, and the row says what will really
+  /// arrive.
+  static Size screenCrop(Size screen, Size source) {
+    if (source.width <= 0 || source.height <= 0) return screen;
+
+    final double shape = screen.width / screen.height;
+    double w = math.min(screen.width, source.width);
+    double h = w / shape;
+    if (h > source.height) {
+      h = source.height;
+      w = h * shape;
+    }
+    return Size(w.roundToDouble(), h.roundToDouble());
+  }
+
   /// [screen] is the device's real pixel size, [source] the photograph's own.
   static List<DownloadChoice> forPhoto({
     required String originalUrl,
     required Size screen,
     required Size source,
   }) {
-    final int screenW = screen.width.round();
-    final int screenH = screen.height.round();
+    final Size fit = screenCrop(screen, source);
+    final int screenW = fit.width.round();
+    final int screenH = fit.height.round();
+    final bool wholeScreen =
+        screenW >= screen.width.round() && screenH >= screen.height.round();
 
     final List<DownloadChoice> choices = <DownloadChoice>[
       DownloadChoice(
         title: 'Your screen',
-        subtitle: 'Cropped to fit this phone exactly',
+        subtitle: wholeScreen
+            ? 'Cropped to fit this phone exactly'
+            : 'Your phone’s shape, as large as this picture allows',
         url: sized(originalUrl, screenW, screenH),
         pixels: Size(screenW.toDouble(), screenH.toDouble()),
       ),

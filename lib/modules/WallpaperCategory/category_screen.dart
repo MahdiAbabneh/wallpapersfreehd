@@ -112,9 +112,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       AppSpace.lg,
                       kNavBarInset + bottom + 50,
                     ),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columnsFor(context),
                       mainAxisSpacing: AppSpace.md,
                       crossAxisSpacing: AppSpace.md,
                       childAspectRatio: 0.82,

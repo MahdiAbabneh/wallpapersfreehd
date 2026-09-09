@@ -17,6 +17,20 @@ import 'tokens.dart';
 /// Room the floating tab bar and the banner need at the end of every gallery.
 const double kNavBarInset = 84;
 
+/// How many columns a wall of wallpapers should have at this width.
+///
+/// Two columns is right for a phone and absurd on a thirteen-inch iPad, where
+/// each tile would be the size of a paperback. The grid follows the width it
+/// is given instead of the platform, so a split-screen iPad and a large phone
+/// both land somewhere sensible.
+int columnsFor(BuildContext context) {
+  final double width = MediaQuery.sizeOf(context).width;
+  if (width >= 1200) return 5;
+  if (width >= 900) return 4;
+  if (width >= 600) return 3;
+  return 2;
+}
+
 /// Shared masonry gallery: lazily built, endlessly paged, pull to refresh.
 ///
 /// Tiles keep each picture's own proportions instead of forcing one crop, which
@@ -56,7 +70,7 @@ class _Masonry extends StatelessWidget {
           for (int band = 0;
               band * NativeGridCard.every < itemCount;
               band++) ...<Widget>[
-            _band(band),
+            _band(context, band),
             if ((band + 1) * NativeGridCard.every < itemCount)
               SliverToBoxAdapter(
                 child: NativeGridCard(key: ValueKey<int>(band)),
@@ -71,7 +85,7 @@ class _Masonry extends StatelessWidget {
   }
 
   ///one run of wallpapers between two ad cards
-  Widget _band(int band) {
+  Widget _band(BuildContext context, int band) {
     final int first = band * NativeGridCard.every;
     final int count = (itemCount - first).clamp(0, NativeGridCard.every);
 
@@ -79,7 +93,7 @@ class _Masonry extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
       sliver: AnimationLimiter(
         child: SliverMasonryGrid.count(
-          crossAxisCount: 2,
+          crossAxisCount: columnsFor(context),
           mainAxisSpacing: AppSpace.md,
           crossAxisSpacing: AppSpace.md,
           childCount: count,
@@ -87,7 +101,7 @@ class _Masonry extends StatelessWidget {
             final int i = first + index;
             return AnimationConfiguration.staggeredGrid(
               position: i,
-              columnCount: 2,
+              columnCount: columnsFor(context),
               duration: AppDuration.slow,
               child: SlideAnimation(
                 verticalOffset: 28,

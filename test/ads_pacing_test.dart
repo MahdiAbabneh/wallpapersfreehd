@@ -106,6 +106,42 @@ void main() {
     });
   });
 
+  group('the size a screen is actually promised', () {
+    const Size screen = Size(1206, 2622);
+
+    test('a picture bigger than the screen gives the whole screen', () {
+      expect(DownloadSizes.screenCrop(screen, const Size(4000, 6000)), screen);
+    });
+
+    test('a picture shorter than the screen keeps the phone\'s shape', () {
+      ///the measured case: asking for 1206x2622 of a 3543x2397 source used to
+      ///arrive as 1206x2397 — the right width and the wrong shape
+      final Size fit = DownloadSizes.screenCrop(screen, const Size(3543, 2397));
+      expect(fit.height, 2397);
+      expect(fit.width, lessThan(1206));
+      expect(
+          fit.width / fit.height, closeTo(screen.width / screen.height, 0.005));
+    });
+
+    test('the row is labelled with what will really arrive', () {
+      final List<DownloadChoice> choices = DownloadSizes.forPhoto(
+        originalUrl: 'https://images.pexels.com/photos/1/x.jpeg',
+        screen: screen,
+        source: const Size(3543, 2397),
+      );
+      final DownloadChoice first = choices.first;
+      expect(first.title, 'Your screen');
+      expect(first.dimensions, '1103 × 2397');
+      expect(first.subtitle, isNot('Cropped to fit this phone exactly'));
+      expect(first.url, contains('w=1103'));
+      expect(first.url, contains('h=2397'));
+    });
+
+    test('an unknown source size falls back to the screen', () {
+      expect(DownloadSizes.screenCrop(screen, Size.zero), screen);
+    });
+  });
+
   group('what a video is asked for', () {
     const Size screen = Size(1206, 2622);
 

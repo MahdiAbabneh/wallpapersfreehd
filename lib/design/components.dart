@@ -108,83 +108,93 @@ class SegmentedTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.chip,
-        border: Border.all(color: AppColors.line),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double itemWidth = constraints.maxWidth / labels.length;
-          return Stack(
-            children: <Widget>[
-              AnimatedAlign(
-                duration: AppDuration.base,
-                curve: AppDuration.curve,
-                alignment: Alignment(
-                  labels.length == 1
-                      ? 0
-                      : (index / (labels.length - 1)) * 2 - 1,
-                  0,
-                ),
-                child: Container(
-                  width: itemWidth,
-                  height: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: AppColors.surfaceHigh,
-                    borderRadius: AppRadius.chip,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(
+        ///a two-word switch stretched across a thirteen-inch iPad reads as a
+        ///rule, not a control
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: AppRadius.chip,
+            border: Border.all(color: AppColors.line),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double itemWidth = constraints.maxWidth / labels.length;
+              return Stack(
+                children: <Widget>[
+                  AnimatedAlign(
+                    duration: AppDuration.base,
+                    curve: AppDuration.curve,
+                    alignment: Alignment(
+                      labels.length == 1
+                          ? 0
+                          : (index / (labels.length - 1)) * 2 - 1,
+                      0,
+                    ),
+                    child: Container(
+                      width: itemWidth,
+                      height: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: AppColors.surfaceHigh,
+                        borderRadius: AppRadius.chip,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Row(
-                children: List<Widget>.generate(labels.length, (int i) {
-                  final bool active = i == index;
-                  return Expanded(
-                    child: Semantics(
-                      selected: active,
-                      button: true,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => onChanged(i),
-                        child: AnimatedDefaultTextStyle(
-                          duration: AppDuration.fast,
+                  Row(
+                    children: List<Widget>.generate(labels.length, (int i) {
+                      final bool active = i == index;
+                      return Expanded(
+                        child: Semantics(
+                          selected: active,
+                          button: true,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => onChanged(i),
+                            child: AnimatedDefaultTextStyle(
+                              duration: AppDuration.fast,
 
-                          ///no trailing letter-spacing: it hangs after the last
-                          ///glyph and pushes the pair off centre
-                          style: AppText.label.copyWith(
-                            letterSpacing: 0,
-                            color: active ? AppColors.text : AppColors.textDim,
-                          ),
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: <Widget>[
-                                Icon(
-                                  icons[i],
-                                  size: 17,
-                                  color: active
-                                      ? AppColors.accent
-                                      : AppColors.textDim,
+                              ///no trailing letter-spacing: it hangs after the last
+                              ///glyph and pushes the pair off centre
+                              style: AppText.label.copyWith(
+                                letterSpacing: 0,
+                                color:
+                                    active ? AppColors.text : AppColors.textDim,
+                              ),
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+                                    Icon(
+                                      icons[i],
+                                      size: 17,
+                                      color: active
+                                          ? AppColors.accent
+                                          : AppColors.textDim,
+                                    ),
+                                    const SizedBox(width: 7),
+                                    Text(labels[i],
+                                        textAlign: TextAlign.center),
+                                  ],
                                 ),
-                                const SizedBox(width: 7),
-                                Text(labels[i], textAlign: TextAlign.center),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ],
-          );
-        },
+                      );
+                    }),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }

@@ -266,68 +266,76 @@ class _ActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassPanel(
-      radius: AppRadius.chip,
-      opacity: 0.5,
-      blur: 26,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.sm,
-        vertical: AppSpace.sm,
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Pressable(
-              onTap: busy ? null : onSave,
-              semanticLabel: 'Save to gallery',
-              child: Container(
-                height: 46,
-                decoration: const BoxDecoration(
-                  color: AppColors.accent,
-                  borderRadius: AppRadius.chip,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    if (busy)
-                      const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.onAccent,
-                        ),
-                      )
-                    else
-                      const Icon(Icons.arrow_downward_rounded,
-                          size: 18, color: AppColors.onAccent),
-                    const SizedBox(width: AppSpace.sm),
-                    Text(
-                      busy ? 'Saving…' : 'Download',
-                      style: AppText.label.copyWith(color: AppColors.onAccent),
+    return Center(
+      child: ConstrainedBox(
+        ///on a thirteen-inch iPad a full-width Download button is a stripe
+        ///across the picture; the bar stops growing once it is comfortable
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: GlassPanel(
+          radius: AppRadius.chip,
+          opacity: 0.5,
+          blur: 26,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.sm,
+            vertical: AppSpace.sm,
+          ),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Pressable(
+                  onTap: busy ? null : onSave,
+                  semanticLabel: 'Save to gallery',
+                  child: Container(
+                    height: 46,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: AppRadius.chip,
                     ),
-                  ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        if (busy)
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.onAccent,
+                            ),
+                          )
+                        else
+                          const Icon(Icons.arrow_downward_rounded,
+                              size: 18, color: AppColors.onAccent),
+                        const SizedBox(width: AppSpace.sm),
+                        Text(
+                          busy ? 'Saving…' : 'Download',
+                          style:
+                              AppText.label.copyWith(color: AppColors.onAccent),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: AppSpace.xs),
+              _BarIcon(
+                icon: favorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_outline_rounded,
+                color: favorite ? AppColors.accent : Colors.white,
+                label: favorite ? 'Saved' : 'Save',
+                onTap: onFavorite,
+              ),
+              Builder(
+                builder: (BuildContext inner) => _BarIcon(
+                  icon: Icons.ios_share_rounded,
+                  label: 'Share',
+                  onTap: () => onShare(inner),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpace.xs),
-          _BarIcon(
-            icon: favorite
-                ? Icons.favorite_rounded
-                : Icons.favorite_outline_rounded,
-            color: favorite ? AppColors.accent : Colors.white,
-            label: favorite ? 'Saved' : 'Save',
-            onTap: onFavorite,
-          ),
-          Builder(
-            builder: (BuildContext inner) => _BarIcon(
-              icon: Icons.ios_share_rounded,
-              label: 'Share',
-              onTap: () => onShare(inner),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

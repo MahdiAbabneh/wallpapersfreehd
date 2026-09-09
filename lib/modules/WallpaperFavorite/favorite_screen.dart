@@ -118,7 +118,7 @@ class _FavoriteGrid extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
       sliver: SliverMasonryGrid.count(
-        crossAxisCount: 2,
+        crossAxisCount: columnsFor(context),
         mainAxisSpacing: AppSpace.md,
         crossAxisSpacing: AppSpace.md,
         childCount: count,
