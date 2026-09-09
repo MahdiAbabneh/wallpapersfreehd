@@ -59,20 +59,26 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_lints: ^6.0.0
 
+# Source art lives in branding/, outside assets/, so none of it is shipped
+# inside the app — the launcher icon and the splash are baked into the native
+# projects at generation time and never loaded at runtime.
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/images/app_icon.jpg"
+  image_path: "branding/app_icon_1024.png"
 
 
 flutter_native_splash:
-  color: "#42a5f5"
-  image: assets/images/splash_image.png
+  # the app's own canvas, so the launch screen and the first frame are the
+  # same black and nothing flashes between them
+  color: "#08080A"
+  image: branding/splash_mark.png
   android: true
   ios: true
-  android_gravity: fill
-  ios_content_mode: scaleToFill
   fullscreen: true
+  android_12:
+    color: "#08080A"
+    image: branding/splash_mark.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -85,9 +91,6 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/images/
   fonts:
     - family: mali
       fonts:

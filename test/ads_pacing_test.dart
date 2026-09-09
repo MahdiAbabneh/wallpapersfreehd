@@ -55,8 +55,7 @@ void main() {
         'ca-app-pub-3786119355418459/3577471249',
         'ca-app-pub-3786119355418459/3934166640',
       ];
-      final String source =
-          File('lib/ads/ad_ids.dart').readAsStringSync();
+      final String source = File('lib/ads/ad_ids.dart').readAsStringSync();
       for (final String id in ours) {
         expect(source, contains(id), reason: '$id went missing from AdIds');
       }

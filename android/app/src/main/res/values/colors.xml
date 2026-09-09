@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The ground the launcher mask sits on: the app's own canvas colour, so
+         the icon and the first screen are the same black. -->
+    <color name="ic_launcher_background">#0F0B0D</color>
+</resources>
