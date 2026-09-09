@@ -4,8 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../Compouents/constant_empty.dart';
 import '../../Layout/Home/cubit/cubit.dart';
 import '../../Layout/Home/cubit/states.dart';
+import '../../ads/ads.dart';
 import '../../design/components.dart';
 import '../../design/gallery_grid.dart';
+import '../../design/tokens.dart';
 
 /// One video collection.
 class ItemSelectVideosScreen extends StatelessWidget {
@@ -45,6 +47,13 @@ class ItemSelectVideosScreen extends StatelessWidget {
                       ),
               ),
             ],
+          ),
+          bottomNavigationBar: const DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.canvas,
+              border: Border(top: BorderSide(color: AppColors.line)),
+            ),
+            child: SafeArea(top: false, child: CustomBannerAd()),
           ),
         );
       },

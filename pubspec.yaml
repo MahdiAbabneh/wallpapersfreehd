@@ -77,8 +77,10 @@ flutter_native_splash:
   ios: true
   fullscreen: true
   android_12:
+    # Android 12+ masks this into a circle and keeps only the inner two thirds,
+    # so it gets its own, smaller artwork — the full-size mark loses its corners
     color: "#08080A"
-    image: branding/splash_mark.png
+    image: branding/splash_mark_android12.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
