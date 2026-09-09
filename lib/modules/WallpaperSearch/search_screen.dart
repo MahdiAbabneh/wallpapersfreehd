@@ -16,6 +16,23 @@ import '../../network/cache_helper.dart';
 
 
 const String _recentsKey = 'recentSearches';
+
+///Pexels filters by colour, which is the one thing Search can do that browsing
+///the shelves cannot: pick a tone, or narrow words already typed.
+const List<(String, Color)> _colours = <(String, Color)>[
+  ('black', Color(0xFF141416)),
+  ('white', Color(0xFFEDEDF0)),
+  ('gray', Color(0xFF8A8A93)),
+  ('blue', Color(0xFF3B7DD8)),
+  ('turquoise', Color(0xFF2BB6B0)),
+  ('green', Color(0xFF3E9F52)),
+  ('yellow', Color(0xFFE0B93B)),
+  ('orange', Color(0xFFE07A34)),
+  ('red', Color(0xFFCF3B3B)),
+  ('pink', Color(0xFFD870A8)),
+  ('violet', Color(0xFF8A5BD6)),
+  ('brown', Color(0xFF8B6444)),
+];
 const int _recentsLimit = 8;
 
 /// Search.
@@ -44,6 +61,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   ///what Pexels is actually asked; differs when a shelf name was tapped
   String _term = '';
+
+  ///the colour filter, empty when none is chosen
+  String _colour = '';
 
   @override
   void initState() {
@@ -129,10 +149,33 @@ class _SearchScreenState extends State<SearchScreen> {
   void _run() {
     final HomeCubit cubit = HomeCubit.get(context);
     if (_tab == 0) {
-      cubit.searchImages(_term);
+      cubit.searchImages(_term, color: _colour.isEmpty ? null : _colour);
     } else {
-      cubit.searchVideo(_term);
+      ///the video endpoint has no colour filter, so the word carries it
+      cubit.searchVideo(_colour.isEmpty ? _term : '$_colour $_term'.trim());
     }
+  }
+
+  ///a colour narrows what is already on screen, or starts a search of its own
+  ///when the field is still empty
+  void _pickColour(String name) {
+    ///a search that came from a colour alone carries this placeholder word
+    final bool colourOnly = _term == 'wallpaper';
+    final String next = _colour == name ? '' : name;
+
+    setState(() {
+      _colour = next;
+      if (next.isEmpty && colourOnly) {
+        ///the colour was the whole search; letting it go empties the screen
+        _label = '';
+        _term = '';
+      } else if (next.isNotEmpty && (_term.isEmpty || colourOnly)) {
+        _label = next;
+        _term = 'wallpaper';
+      }
+    });
+
+    if (_term.isNotEmpty) _run();
   }
 
   ///an empty field means an empty screen: leaving results behind a cleared
@@ -226,23 +269,15 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             if (_suggestions.isNotEmpty)
               _ChipRow(words: _suggestions, onPick: _submit)
-            else if (_label.isEmpty) ...<Widget>[
-              if (_recents.isNotEmpty)
-                _ChipRow(
-                  words: _recents,
-                  onPick: _submit,
-                  title: 'Recent',
-                  onClear: _clearRecents,
-                ),
+            else if (_label.isEmpty && _recents.isNotEmpty)
               _ChipRow(
-                words: kCollections
-                    .take(8)
-                    .map((Collection c) => c.name)
-                    .toList(),
+                words: _recents,
                 onPick: _submit,
-                title: 'Popular',
+                title: 'Recent',
+                onClear: _clearRecents,
               ),
-            ],
+            ///the shelves already live in Themes; what Search adds is colour
+            _ColourRow(selected: _colour, onPick: _pickColour),
             Expanded(child: _results(cubit, state, photos)),
           ],
         );
@@ -256,8 +291,9 @@ class _SearchScreenState extends State<SearchScreen> {
     final int count = photos
         ? (cubit.curatedSearchPhotos?.photos.length ?? 0)
         : (cubit.curatedSearchVideo?.videos.length ?? 0);
-    if (count == 0) return '“$_label”';
-    return '$count for “$_label”';
+    final String colour = _colour.isEmpty ? '' : ' · $_colour';
+    if (count == 0) return '“$_label”$colour';
+    return '$count for “$_label”$colour';
   }
 
   Widget _results(HomeCubit cubit, HomeStates state, bool photos) {
@@ -380,6 +416,72 @@ class _ChipRow extends StatelessWidget {
                 child: Text(words[index], style: AppText.label),
               ),
             ),
+          ),
+        ),
+        const SizedBox(height: AppSpace.md),
+      ],
+    );
+  }
+}
+
+
+/// The colour filter: a row of tones, one of which can be active.
+class _ColourRow extends StatelessWidget {
+  const _ColourRow({required this.selected, required this.onPick});
+
+  final String selected;
+  final ValueChanged<String> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+              AppSpace.xl, 0, AppSpace.xl, AppSpace.sm),
+          child: Text(
+            selected.isEmpty ? 'ANY COLOUR' : selected.toUpperCase(),
+            style: AppText.eyebrow.copyWith(
+              color: selected.isEmpty ? AppColors.textFaint : AppColors.accent,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl),
+            itemCount: _colours.length,
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpace.md),
+            itemBuilder: (BuildContext context, int index) {
+              final (String name, Color colour) = _colours[index];
+              final bool active = name == selected;
+              return Semantics(
+                selected: active,
+                button: true,
+                label: name,
+                child: Pressable(
+                  onTap: () => onPick(name),
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: AppDuration.fast,
+                      width: active ? 34 : 30,
+                      height: active ? 34 : 30,
+                      decoration: BoxDecoration(
+                        color: colour,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color:
+                              active ? AppColors.accent : AppColors.lineStrong,
+                          width: active ? 2.5 : 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
         const SizedBox(height: AppSpace.md),

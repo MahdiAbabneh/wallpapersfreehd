@@ -92,8 +92,8 @@ class _MediaViewerState extends State<MediaViewer> {
   ///Download asks which size first: a wallpaper that already fits the screen
   ///beats a 30MB original the phone will crop by itself
   Future<void> _save() async {
-    final Size screen = MediaQuery.sizeOf(context) *
-        MediaQuery.devicePixelRatioOf(context);
+    final Size screen =
+        MediaQuery.sizeOf(context) * MediaQuery.devicePixelRatioOf(context);
 
     await SaveSheet.open(
       context,
@@ -118,40 +118,31 @@ class _MediaViewerState extends State<MediaViewer> {
     AdInterstitialBottomSheet.loadIntersitialAd();
   }
 
-  ///crop opens the editor and, when the reader confirms, writes the result to
-  ///the gallery; cancelling leaves nothing behind, so nothing is announced
-  Future<void> _adjust() async {
-    if (_busy) return;
+  ///crop opens the platform editor over the size sheet and reports back
+  ///whether anything was written; cancelling leaves nothing behind, so the
+  ///sheet stays on its list of sizes
+  Future<bool> _adjust() async {
+    if (_busy) return false;
     setState(() => _busy = true);
     final HomeCubit cubit = HomeCubit.get(context);
     selectedTypeImage = 'JPG';
     await cubit.croppedImage(widget.originalUrl ?? widget.fullUrl);
-    if (!mounted) return;
+    if (!mounted) return false;
     setState(() => _busy = false);
-    if (cubit.state is WallpaperCroppedImageSuccess) {
-      _toast('Cropped wallpaper saved to your gallery');
-    }
+    return cubit.state is WallpaperCroppedImageSuccess;
   }
 
   Future<void> _share(BuildContext context) async {
     final RenderBox? box = context.findRenderObject() as RenderBox?;
-    final String source = widget.isVideo
-        ? (widget.videoUrl ?? widget.fullUrl)
-        : widget.fullUrl;
+    final String source =
+        widget.isVideo ? (widget.videoUrl ?? widget.fullUrl) : widget.fullUrl;
     final file = await DefaultCacheManager().getSingleFile(source);
     await shareFiles(
       <String>[file.path],
-      sharePositionOrigin: box == null
-          ? null
-          : box.localToGlobal(Offset.zero) & box.size,
+      sharePositionOrigin:
+          box == null ? null : box.localToGlobal(Offset.zero) & box.size,
     );
     AdInterstitialBottomSheet.loadIntersitialAd();
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -238,7 +229,7 @@ class _MediaViewerState extends State<MediaViewer> {
                   isVideo: widget.isVideo,
                   onSave: _save,
                   onFavorite: _toggleFavorite,
-                      onShare: _share,
+                  onShare: _share,
                 ),
               ],
             ),
@@ -322,7 +313,6 @@ class _ActionBar extends StatelessWidget {
             label: favorite ? 'Saved' : 'Save',
             onTap: onFavorite,
           ),
-
           Builder(
             builder: (BuildContext inner) => _BarIcon(
               icon: Icons.ios_share_rounded,

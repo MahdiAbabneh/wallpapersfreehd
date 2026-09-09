@@ -21,14 +21,16 @@ class SaveSheet extends StatefulWidget {
   final List<DownloadChoice> choices;
   final bool isVideo;
 
-  ///photographs can also be cut by hand; a clip cannot, so this is null there
-  final VoidCallback? onAdjust;
+  ///photographs can also be cut by hand; a clip cannot, so this is null there.
+  ///it answers with whether a file actually reached the gallery, because a
+  ///cancelled crop must not be congratulated
+  final Future<bool> Function()? onAdjust;
 
   static Future<void> open(
     BuildContext context, {
     required List<DownloadChoice> choices,
     required bool isVideo,
-    VoidCallback? onAdjust,
+    Future<bool> Function()? onAdjust,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -99,6 +101,72 @@ class _SaveSheetState extends State<SaveSheet> {
     }
   }
 
+  ///the cutting happens in the platform's own editor, which covers this sheet
+  ///rather than replacing it — so the answer comes back to the same panel, in
+  ///the same words a download ends on
+  Future<void> _crop() async {
+    final bool saved = await widget.onAdjust!();
+    if (!mounted || !saved) return;
+    setState(() => _outcome = const SaveOutcome(SaveStatus.done));
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    if (mounted) Navigator.of(context).maybePop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SheetShell(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (_outcome != null)
+            _Result(
+              ok: _outcome!.status == SaveStatus.done,
+              message: _outcome!.status == SaveStatus.done
+                  ? 'Saved to your gallery'
+                  : (_outcome!.message ?? 'That did not work, try again'),
+            )
+          else if (_running != null)
+            _Progress(
+              progress: _progress,
+              choice: _running!,
+              bytes: _weights[_running!.url],
+            )
+          else ...<Widget>[
+            Text('Choose a size', style: AppText.title.copyWith(fontSize: 19)),
+            const SizedBox(height: AppSpace.lg),
+            for (final DownloadChoice choice in widget.choices)
+              _Option(
+                choice: choice,
+                bytes: _weights[choice.url],
+                onTap: () => _start(choice),
+              ),
+            if (widget.onAdjust != null) ...<Widget>[
+              const SizedBox(height: AppSpace.xs),
+              _Option(
+                choice: const DownloadChoice(
+                  title: 'Choose the part yourself',
+                  subtitle: 'Crop and straighten it, then save',
+                  url: '',
+                ),
+                icon: Icons.crop_rounded,
+                onTap: _crop,
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The glass the sheet is served on: rounded, blurred, with the grab handle
+/// every bottom sheet in the app wears.
+class _SheetShell extends StatelessWidget {
+  const _SheetShell({required this.child});
+
+  final Widget child;
+
   @override
   Widget build(BuildContext context) {
     final EdgeInsets safe = MediaQuery.paddingOf(context);
@@ -135,40 +203,7 @@ class _SaveSheetState extends State<SaveSheet> {
                 ),
               ),
             ),
-            if (_outcome != null)
-              _Result(outcome: _outcome!)
-            else if (_running != null)
-              _Progress(
-                progress: _progress,
-                choice: _running!,
-                bytes: _weights[_running!.url],
-              )
-            else ...<Widget>[
-              Text('Choose a size',
-                  style: AppText.title.copyWith(fontSize: 19)),
-              const SizedBox(height: AppSpace.lg),
-              for (final DownloadChoice choice in widget.choices)
-                _Option(
-                  choice: choice,
-                  bytes: _weights[choice.url],
-                  onTap: () => _start(choice),
-                ),
-              if (widget.onAdjust != null) ...<Widget>[
-                const SizedBox(height: AppSpace.xs),
-                _Option(
-                  choice: const DownloadChoice(
-                    title: 'Choose the part yourself',
-                    subtitle: 'Crop and straighten it, then save',
-                    url: '',
-                  ),
-                  icon: Icons.crop_rounded,
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    widget.onAdjust!();
-                  },
-                ),
-              ],
-            ],
+            child,
           ],
         ),
       ),
@@ -316,13 +351,13 @@ class _Progress extends StatelessWidget {
 }
 
 class _Result extends StatelessWidget {
-  const _Result({required this.outcome});
+  const _Result({required this.ok, required this.message});
 
-  final SaveOutcome outcome;
+  final bool ok;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    final bool ok = outcome.status == SaveStatus.done;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpace.sm),
       child: Row(
@@ -335,9 +370,7 @@ class _Result extends StatelessWidget {
           const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
-              ok
-                  ? 'Saved to your gallery'
-                  : (outcome.message ?? 'That did not work, try again'),
+              message,
               style: AppText.label.copyWith(fontSize: 15),
             ),
           ),

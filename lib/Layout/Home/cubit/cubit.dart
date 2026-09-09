@@ -213,7 +213,11 @@ class HomeCubit extends Cubit<HomeStates> {
   String _searchPhotoQuery = "";
 
   ///Search Images: starts at the best matches, then appends while scrolling
-  Future<void>  searchImages(String? text, {bool more = false})async {
+  ///the colour the reader is filtering by, kept beside the words so paging
+  ///keeps it
+  String _searchPhotoColor = "";
+
+  Future<void>  searchImages(String? text, {bool more = false, String? color})async {
     if (more) {
       if (searchPhotoCursor.loading || searchPhotoCursor.ended || curatedSearchPhotos == null) return;
       searchPhotoCursor.loading = true;
@@ -221,13 +225,19 @@ class HomeCubit extends Cubit<HomeStates> {
     } else {
       curatedSearchPhotos = null;
       _searchPhotoQuery = text ?? "";
+      _searchPhotoColor = color ?? "";
       searchPhotoCursor.reset(1);
       searchPhotoCursor.loading = true;
       emit(WallpaperSearchImageLoading());
     }
     try {
       final value = await DioHelper.getData(
-        url: 'https://api.pexels.com/v1/search?query=$_searchPhotoQuery'
+        ///a wallpaper is a tall picture: asking for portrait raises the share
+        ///of usable results from eight in ten to ten in ten
+        url: 'https://api.pexels.com/v1/search'
+            '?query=${Uri.encodeQueryComponent(_searchPhotoQuery)}'
+            '&orientation=portrait'
+            '${_searchPhotoColor.isEmpty ? '' : '&color=$_searchPhotoColor'}'
             '&page=${searchPhotoCursor.page}&per_page=${searchPhotoCursor.perPage}',
       );
       final CuratedPhotos data = _screen(CuratedPhotos.fromJson(value.data));
@@ -303,7 +313,9 @@ class HomeCubit extends Cubit<HomeStates> {
     }
     try {
       final value = await DioHelper.getData(
-        url: 'https://api.pexels.com/v1/search?query=$_selectPhotoQuery'
+        url: 'https://api.pexels.com/v1/search'
+            '?query=${Uri.encodeQueryComponent(_selectPhotoQuery)}'
+            '&orientation=portrait'
             '&page=${selectPhotoCursor.page}&per_page=${selectPhotoCursor.perPage}',
       );
       CuratedPhotos data = _screen(CuratedPhotos.fromJson(value.data));
@@ -311,7 +323,9 @@ class HomeCubit extends Cubit<HomeStates> {
       if (!more && data.photos.isEmpty && selectPhotoCursor.page != 1) {
         selectPhotoCursor.reset(1);
         final retry = await DioHelper.getData(
-          url: 'https://api.pexels.com/v1/search?query=$_selectPhotoQuery'
+          url: 'https://api.pexels.com/v1/search'
+              '?query=${Uri.encodeQueryComponent(_selectPhotoQuery)}'
+              '&orientation=portrait'
               '&page=1&per_page=${selectPhotoCursor.perPage}',
         );
         data = _screen(CuratedPhotos.fromJson(retry.data));
