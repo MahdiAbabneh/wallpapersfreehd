@@ -95,15 +95,18 @@ class _FavoriteGrid extends StatelessWidget {
         parent: AlwaysScrollableScrollPhysics(),
       ),
       slivers: <Widget>[
-        for (int band = 0;
-            band * NativeGridCard.every < items.length;
-            band++) ...<Widget>[
-          _band(context, items, band),
-          if ((band + 1) * NativeGridCard.every < items.length)
-            SliverToBoxAdapter(
-              child: NativeGridCard(key: ValueKey<int>(band)),
-            ),
-        ],
+        if (!NativeGridCard.enabled)
+          _band(context, items, 0, all: true)
+        else
+          for (int band = 0;
+              band * NativeGridCard.every < items.length;
+              band++) ...<Widget>[
+            _band(context, items, band),
+            if ((band + 1) * NativeGridCard.every < items.length)
+              SliverToBoxAdapter(
+                child: NativeGridCard(key: ValueKey<int>(band)),
+              ),
+          ],
         SliverToBoxAdapter(
           child: SizedBox(height: kNavBarInset + bottom + 50),
         ),
@@ -111,9 +114,12 @@ class _FavoriteGrid extends StatelessWidget {
     );
   }
 
-  Widget _band(BuildContext context, List<dynamic> items, int band) {
-    final int first = band * NativeGridCard.every;
-    final int count = (items.length - first).clamp(0, NativeGridCard.every);
+  Widget _band(BuildContext context, List<dynamic> items, int band,
+      {bool all = false}) {
+    final int first = all ? 0 : band * NativeGridCard.every;
+    final int count = all
+        ? items.length
+        : (items.length - first).clamp(0, NativeGridCard.every);
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),

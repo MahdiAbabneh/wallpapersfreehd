@@ -67,15 +67,18 @@ class _Masonry extends StatelessWidget {
           ///the grid is laid out in bands with an ad card between them, rather
           ///than one long grid with an ad squeezed into a single column: a
           ///native card needs the whole width to be worth showing at all
-          for (int band = 0;
-              band * NativeGridCard.every < itemCount;
-              band++) ...<Widget>[
-            _band(context, band),
-            if ((band + 1) * NativeGridCard.every < itemCount)
-              SliverToBoxAdapter(
-                child: NativeGridCard(key: ValueKey<int>(band)),
-              ),
-          ],
+          if (!NativeGridCard.enabled)
+            _band(context, 0, all: true)
+          else
+            for (int band = 0;
+                band * NativeGridCard.every < itemCount;
+                band++) ...<Widget>[
+              _band(context, band),
+              if ((band + 1) * NativeGridCard.every < itemCount)
+                SliverToBoxAdapter(
+                  child: NativeGridCard(key: ValueKey<int>(band)),
+                ),
+            ],
           SliverToBoxAdapter(
             child: _GalleryFooter(cursor: cursor, bottomInset: safe.bottom),
           ),
@@ -85,9 +88,10 @@ class _Masonry extends StatelessWidget {
   }
 
   ///one run of wallpapers between two ad cards
-  Widget _band(BuildContext context, int band) {
-    final int first = band * NativeGridCard.every;
-    final int count = (itemCount - first).clamp(0, NativeGridCard.every);
+  Widget _band(BuildContext context, int band, {bool all = false}) {
+    final int first = all ? 0 : band * NativeGridCard.every;
+    final int count =
+        all ? itemCount : (itemCount - first).clamp(0, NativeGridCard.every);
 
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),

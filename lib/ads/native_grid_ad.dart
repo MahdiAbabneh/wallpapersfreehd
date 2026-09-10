@@ -12,10 +12,30 @@ import 'ad_ids.dart';
 /// of grey text — so it is given the whole row or it is not shown at all.
 ///
 /// Nothing is reserved before the ad arrives: an empty box where an ad might
-/// one day appear is a hole in the gallery, and this grid fills often enough
-/// that a late card simply slides in.
+/// one day appear is a hole in the gallery, and native fill is low enough that
+/// most of those holes would stay empty.
+///
+/// The cost of not reserving is that the card grows from nothing to 350 points
+/// the moment its ad lands. If that happens above the fold it shoves the
+/// gallery down under the reader's thumb — they scroll a little and the wall
+/// appears to jump back up. So the card only takes its space when it is still
+/// **below** the viewport, where growing costs nobody their place. An ad that
+/// arrives too late is thrown away rather than displayed rudely.
 class NativeGridCard extends StatefulWidget {
   const NativeGridCard({super.key});
+
+  /// Whether an ad card is placed in the gallery at all.
+  ///
+  /// Off. It is the only thing in a wallpaper grid whose height changes after
+  /// the fact — it is nothing until its ad lands, then 350 points — and a
+  /// reader scrolling past one at that moment has the whole wall shoved down
+  /// under their thumb. Every other format the app runs (banner, interstitial,
+  /// rewarded, app-open) sits outside the scroll and cannot do that.
+  ///
+  /// The trade is small: this account measured 5.88% match and 8.3% show for
+  /// native on Android, so the format was paying for its seat in noise. Turn it
+  /// back on by flipping this to true.
+  static const bool enabled = false;
 
   /// How many wallpapers separate two ad cards.
   static const int every = 10;
@@ -28,6 +48,11 @@ class _NativeGridCardState extends State<NativeGridCard>
     with AutomaticKeepAliveClientMixin {
   NativeAd? _ad;
   bool _loaded = false;
+
+  ///an ad that arrived while the slot was on screen, held back until it can
+  ///take its space without moving anything the reader is looking at
+  bool _waiting = false;
+  ScrollPosition? _position;
 
   @override
   bool get wantKeepAlive => true;
@@ -76,6 +101,14 @@ class _NativeGridCardState extends State<NativeGridCard>
             ad.dispose();
             return;
           }
+          if (!_isBelowTheFold()) {
+            ///growing here would push the gallery down mid-scroll, so the ad
+            ///waits until the slot is out of sight again rather than being
+            ///thrown away
+            _waiting = true;
+            _watchScroll();
+            return;
+          }
           setState(() => _loaded = true);
         },
         onAdFailedToLoad: (Ad ad, LoadAdError error) => ad.dispose(),
@@ -85,8 +118,36 @@ class _NativeGridCardState extends State<NativeGridCard>
     ad.load();
   }
 
+  ///whether this still-empty slot sits entirely past the bottom of what the
+  ///reader can see, so claiming its height moves nothing they are looking at
+  bool _isBelowTheFold() {
+    final RenderObject? box = context.findRenderObject();
+    final ScrollableState? scrollable = Scrollable.maybeOf(context);
+    if (box is! RenderBox || !box.hasSize || scrollable == null) return false;
+
+    final RenderObject? viewport = scrollable.context.findRenderObject();
+    if (viewport is! RenderBox) return false;
+
+    final double top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+    return top >= viewport.size.height;
+  }
+
+  void _watchScroll() {
+    _position ??= Scrollable.maybeOf(context)?.position;
+    _position?.addListener(_recheck);
+  }
+
+  void _recheck() {
+    if (!mounted || !_waiting || _ad == null) return;
+    if (!_isBelowTheFold()) return;
+    _waiting = false;
+    _position?.removeListener(_recheck);
+    setState(() => _loaded = true);
+  }
+
   @override
   void dispose() {
+    _position?.removeListener(_recheck);
     _ad?.dispose();
     super.dispose();
   }
